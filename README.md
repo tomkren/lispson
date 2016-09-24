@@ -1,2 +1,2 @@
 # lispson
-Runable code encoded in JSON inspired by lambda calculus and Lisp.
+Runnable code encoded in JSON inspired by lambda calculus and Lisp.
