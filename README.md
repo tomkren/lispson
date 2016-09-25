@@ -1,9 +1,12 @@
 # lispson
 Runnable code encoded in JSON inspired by lambda calculus and Lisp.
 
-The rest is for now in czech language (I will translate or move it soon, hopefully).
+## Meta-decoder
+Meta-decoder is a decoder of decoders;
+a result of a meta-decoder is a specific decoder of lispson to some target language. 
 
-## Vypsychlejší nápady pro budoucí vylomeniny
+*The rest is for now in czech language (I will translate or move it soon, hopefully).*
+
 Což takhle udělat rovnou generátor dekodérů pro další jazyky s evalem?
 Idea je taková, že třeba JavaScriptový kód bude velice podobný, tak proč ho psát v JavaScriptu?
 Pro cílový jazyk můžeme definovat několik konstrukcí, ze kterých pak poskládáme potřebný kód dekodéru.

@@ -48,7 +48,8 @@ def decode_list(json_list, lib):
 
         # Non-meta function
         else:
-            return fun+'('+(', '.join([decode(o, lib) for o in args]))+')'
+            decoded_args = [decode(o, lib) for o in args]
+            return lib['target']['app'](fun, decoded_args)  # fun+'('+(', '.join(decoded_args))+')'
 
     # Empty json_list
     else:
@@ -60,7 +61,7 @@ def decode_dict(json_dict, lib):
     if len(keys) == 1:
         head = keys[0]
         body = decode(json_dict[head], lib)
-        return '(lambda '+head+': '+body+')'
+        return lib['target']['lam'](head, body)
     else:
         return json.dumps(json_dict)
 
@@ -89,7 +90,12 @@ def test_decode(lib, json_o):
 def main():
 
     lib = {
+        'target': {
+            'app': lambda fun, args: fun+'('+(', '.join(args))+')',
+            'lam': lambda head, body: '(lambda '+head+': '+body+')',
+        },
         'native': {
+            'if': lambda p, a, b: a if p else b,
             'add': lambda a, b: a+b if not isinstance(a, dict) else dict(a, **b),
             'mkv': lambda k, v: {k: v},
             'mkp': lambda a, b: [a, b]
@@ -132,6 +138,9 @@ def main():
 
     test(4, ['let_=_in_', 'x', 2, ["add", "x", "x"]])
     test(4, ['let_=_in_', 'x', ["add", 1, 1], ["add", "x", "x"]])
+
+    print('Everything tested was OK :)')
+
 
 if __name__ == '__main__':
     main()
