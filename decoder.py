@@ -38,11 +38,11 @@ def decode_acc(json_o, lib, defs):
 
 
 def decode_dict(json_dict, lib, defs):
-    head, body = decode_dict_internal(json_dict, lib, defs)
-    if head is None:
-        return body
+    decoded_dict = decode_dict_internal(json_dict, lib, defs)
+    if decoded_dict['is_lambda']:
+        return lib['target']['lam'](decoded_dict['head'], decoded_dict['body'])
     else:
-        return lib['target']['lam'](head, body)
+        return decoded_dict['json_str']
 
 
 def decode_dict_internal(json_dict, lib, defs):
@@ -50,14 +50,16 @@ def decode_dict_internal(json_dict, lib, defs):
     if len(keys) == 1:
         head = keys[0]
         body = decode_acc(json_dict[head], lib, defs)
-        return head, body
+        return {'is_lambda': True, 'head': head, 'body': body}
     else:
-        return None, json.dumps(json_dict)
+        return {'is_lambda': False, 'json_str': json.dumps(json_dict)}
 
 
 def decode_list(json_list, lib, defs):
     if not json_list:  # Is empty ?
         return '[]'
+    if is_infix(json_list, lib):
+        return decode_infix(lib, defs, *json_list)
     fun = decode_acc(json_list[0], lib, defs)
     args = json_list[1:]
     if fun == "'":  # Is the function "the quote" ?
@@ -69,6 +71,20 @@ def decode_list(json_list, lib, defs):
         return decode_if(decoded_args, lib)
     handle_def(fun, lib, defs)  # Handles definitions if needed.
     return lib['target']['app'](fun, decoded_args)
+
+
+def is_infix(json_list, lib):
+    if len(json_list) == 3:
+        op = json_list[1]
+        return isinstance(op, str) and op in lib['infix']
+    else:
+        return False
+
+
+def decode_infix(lib, defs, a, op, b):
+    decoded_a = decode_acc(a, lib, defs)
+    decoded_b = decode_acc(b, lib, defs)
+    return lib['target']['infix'](decoded_a, op, decoded_b)
 
 
 def decode_quote(args):
@@ -101,17 +117,16 @@ def handle_def(sym, lib, defs):
 
             if isinstance(sym_def, dict):
 
-                head, body = decode_dict_internal(sym_def, lib, defs)
-                if head is None:
-                    sym_def = lib['target']['def'](sym, body)
+                decoded_dict = decode_dict_internal(sym_def, lib, defs)
+                if decoded_dict['is_lambda']:
+                    sym_def = lib['target']['def_fun'](sym, decoded_dict['head'], decoded_dict['body'])
                 else:
-                    sym_def = lib['target']['def_fun'](sym, head, body)
+                    sym_def = lib['target']['def'](sym, decoded_dict['json_str'])
 
             else:
                 body = decode_acc(sym_def, lib, defs)
                 sym_def = lib['target']['def'](sym, body)
 
-            # lib_defs[sym] = sym_def  # Again non-pure optimization ..
         defs[sym] = sym_def
 
 
@@ -135,29 +150,32 @@ def run_tests():
             'lam': lambda head, body: '(lambda '+head+': '+body+')',
             'if': lambda p, a, b: a+' if '+p+' else '+b,
             'def': lambda var, code: var+' = '+code,
-            'def_fun': lambda name, head, body: 'def '+name+'('+head+'): return '+body
+            'def_fun': lambda name, head, body: 'def '+name+'('+head+'): return '+body,
+            'infix': lambda a, op, b: '('+a+' '+op+' '+b+')'
         },
         'native': {
-            'eq': lambda a, b: a == b,
-            'add': lambda a, b: a + b,
-            'sub': lambda a, b: a - b,
-            'mul': lambda a, b: a * b,
             'mkv': lambda k, v: {k: v},
-            'mkp': lambda a, b: [a, b],
-            'add_dict': lambda a, b: dict(a, **b)
+            'mkp': lambda a, b: [a, b]
         },
         'defs': {
-            'plus': 'add',
+            'add': {'x, y': ['x', '+', 'y']},
+            'sub': {'a, b': ['a', '-', 'b']},
+            'mul': {'a, b': ['a', '*', 'b']},
+            'eq': {'a, b': ['a', '==', 'b']},
             'inc': {'x': ['add', 'x', 1]},
+            'add_dict': {'a, b': ['dict', 'a', ['**', 'b']]},
+            'answer': 42,
+            'foo': ["'", 'bar'],
             'even': {'n': ['if', ['eq', 'n', 0], True, ['odd', ['sub', 'n', 1]]]},
             'odd': {'n': ['if', ['eq', 'n', 0], False, ['even', ['sub', 'n', 1]]]},
-            'factorial': {'n': ['if', ['eq', 'n', 0], 1, ['mul', 'n', ['factorial', ['sub', 'n', 1]]]]},
-            'answer': 42,
-            'foo': ["'", 'bar']
+            'factorial': {'n': ['if', ['n', '==', 0], 1, ['n', '*', ['factorial', ['n', '-', 1]]]]}
         },
         'macros': {
             'lambda': {"head, body": ["mkv", "head", "body"]},
             'let_=_in_': {"head, val, body": ["mkp", ["mkv", "head", "body"], 'val']}
+        },
+        'infix': {
+            '==', '!=', 'and', 'or', '+', '-', '*', '/'
         }
     }
 
@@ -190,8 +208,6 @@ def run_tests():
     test(3, '[{"x,y":["add","x","y"]},1,2]')
     test(3, '[["lambda","x,y",["add","x","y"]],1,2]')
     test(65, '[["lambda","x,y",["add","x","y"]],23,42]')
-    test(['add_dict', ["'", {'foo': 42}], ["'", {'bar': 23}]])
-    test(['add_dict', {'foo': 42, "_": 1}, {'bar': 23, "_": 1}])
     test(4, ['let_=_in_', 'x', 2, ["add", "x", "x"]])
     test(4, ['let_=_in_', 'x', ["add", 1, 1], ["add", "x", "x"]])
 
@@ -214,6 +230,11 @@ def run_tests():
 
     test(23, ['sub', 'answer', 19])
     test(120, ['factorial', 5])
+
+    test(4, [2, '+', 2])
+
+    test(['add_dict', ["'", {'foo': 42}], ["'", {'bar': 23}]])
+    test(['add_dict', {'foo': 42, "_": 1}, {'bar': 23, "_": 1}])
 
     print('tested:', num_tested)
     print('not tested:', num_not_tested)
