@@ -21,7 +21,10 @@ def eval_lispson(lispson, lib=None, output_code=False):
 
 def decode(lispson, lib):
     if isinstance(lispson, str):
-        lispson = json.loads(lispson)
+        try:
+            lispson = json.loads(lispson)
+        except ValueError:
+            pass
     ctx = {}
     code_str = decode_acc(lispson, lib, ctx)
     return code_str, ctx
@@ -33,8 +36,25 @@ def decode_acc(json_o, lib, ctx):
         return decode_list(json_o, lib, ctx)
     elif t is dict:
         return decode_dict(json_o, lib, ctx)
-    else:
-        return str(json_o)
+    elif t is str:
+        handle_def(json_o, lib, ctx)
+    return str(json_o)
+
+
+def decode_list(json_list, lib, ctx):
+    if not json_list:  # Is empty ?
+        return '[]'
+    fun = decode_acc(json_list[0], lib, ctx)
+    args = json_list[1:]
+    if fun == "'":  # Is the function "the quote" ?
+        return decode_quote(args)
+    if fun in lib['macros']:  # Is the function a macro ?
+        return decode_macro(fun, args, lib, ctx)
+    decoded_args = [decode_acc(o, lib, ctx) for o in args]
+    if fun == "if":
+        return decode_if(decoded_args, lib)
+    handle_def(fun, lib, ctx)  # Handles definitions if needed.
+    return lib['target']['app'](fun, decoded_args)
 
 
 def decode_dict(json_dict, lib, ctx):
@@ -47,52 +67,36 @@ def decode_dict(json_dict, lib, ctx):
         return json.dumps(json_dict)
 
 
-def decode_list(json_list, lib, ctx):
-    # Is json_list non-empty ?
-    if json_list:
+def decode_quote(args):
+    return json.dumps(args[0] if len(args) == 1 else args)
 
-        fun = decode_acc(json_list[0], lib, ctx)
-        args = json_list[1:]
 
-        # Is the function "the quote" ?
-        if fun == "'":
-            return json.dumps(args[0] if len(args) == 1 else args)
+def decode_macro(macro_name, args, lib, ctx):
+    macros = lib['macros']
+    macro = macros[macro_name]
+    if not callable(macro):
+        macro = eval_lispson(macro, lib)
+        macros[macro_name] = macro  # Non-pure optimization saving the compiled macro (can be omitted)
+    return decode_acc(macro(*args), lib, ctx)
 
-        # Is the function a macro ?
-        macros = lib['macros']
-        if fun in macros:
-            macro = macros[fun]
-            if not callable(macro):
-                macro = eval_lispson(macro, lib)
-                macros[fun] = macro  # Non-pure optimization saving the compiled macro (can be omitted)
-            return decode_acc(macro(*args), lib, ctx)
 
-        # Is the function a defined function ?
-        defs = lib['defs']
-        if fun in defs and fun not in ctx:
-            fun_def = defs[fun]
-            if not isinstance(fun_def, str):
-                ctx[fun] = None  # So it won't recurse forever ..
-                fun_def = decode_acc(fun_def, lib, ctx)
-                defs[fun] = fun_def  # Again non-pure optimization ..
-            ctx[fun] = fun_def
+def handle_def(sym, lib, ctx):
+    defs = lib['defs']
+    if sym in defs and sym not in ctx:
+        fun_def = defs[sym]
+        if not isinstance(fun_def, str):
+            ctx[sym] = None  # So it won't recurse forever ..
+            fun_def = decode_acc(fun_def, lib, ctx)
+            defs[sym] = fun_def  # Again non-pure optimization ..
+        ctx[sym] = fun_def
 
-        decoded_args = [decode_acc(o, lib, ctx) for o in args]
 
-        # Is the function "if" ?
-        if fun == "if":  # needs special treatment because of if laziness (we need to not evaluate both branches)
-            if len(args) == 3:
-                return lib['target']['if'](*decoded_args)
-            else:
-                raise ValueError('if must have 3 args', len(args))
-
-        # native or def function
-        return lib['target']['app'](fun, decoded_args)
-
-    # Empty json_list
+# If needs a special treatment because of if's laziness (we must not evaluate both branches)
+def decode_if(decoded_args, lib):
+    if len(decoded_args) == 3:
+        return lib['target']['if'](*decoded_args)
     else:
-        return '[]'
-
+        raise ValueError('if must have 3 args', len(decoded_args))
 
 # TESTS :
 
@@ -119,9 +123,9 @@ def main():
         },
         'native': {
             'eq': lambda a, b: a == b,
-            'add': lambda a, b: a+b if not isinstance(a, dict) else dict(a, **b),
-            'sub': lambda a, b: a-b,
-            'mul': lambda a, b: a*b,
+            'add': lambda a, b: a + b if not isinstance(a, dict) else dict(a, **b),
+            'sub': lambda a, b: a - b,
+            'mul': lambda a, b: a * b,
             'mkv': lambda k, v: {k: v},
             'mkp': lambda a, b: [a, b]
         },
@@ -130,7 +134,8 @@ def main():
             'inc': {'x': ['add', 'x', 1]},
             'even': {'n': ['if', ['eq', 'n', 0], True, ['odd', ['sub', 'n', 1]]]},
             'odd': {'n': ['if', ['eq', 'n', 0], False, ['even', ['sub', 'n', 1]]]},
-            'factorial': {'n': ['if', ['eq', 'n', 0], 1, ['mul', 'n', ['factorial', ['sub', 'n', 1]]]]}
+            'factorial': {'n': ['if', ['eq', 'n', 0], 1, ['mul', 'n', ['factorial', ['sub', 'n', 1]]]]},
+            'answer': 42
         },
         'macros': {
             'lambda': {"head, body": ["mkv", "head", "body"]},
@@ -178,7 +183,8 @@ def main():
     test(False, ['odd', 42])
     test(False, ['even', 23])
     test(True, ['odd', 23])
-
+    test(42, 'answer')
+    test(23, ['sub', 'answer', 19])
     test(120, ['factorial', 5])
 
     print('Everything tested was OK :)')

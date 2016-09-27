@@ -17,10 +17,10 @@ Pak bude líp vidět, kde jsou ty švy, podél kterých je to potřeba střihnou
 
 Respektive nejelegantnější plán lze nejspíš formulovat následovně:
 
-1) Je rozdíl v kterém jazyku běží dekodér a do kterého jazyka dekodér překládá. 
+1. Je rozdíl v kterém jazyku běží dekodér a do kterého jazyka dekodér překládá. 
    Změnit jazyk do kterého překládá je poměrně triviální.
-2) Pak lze napsat kód samotného dekodéru jako program v lispsonu.
-3) Ten pak stačí dekódovat (klidně pythonovým dekodérem) do JavaScriptu. A je to! :)
+2. Pak lze napsat kód samotného dekodéru jako program v lispsonu.
+3. Ten pak stačí dekódovat (klidně pythonovým dekodérem) do JavaScriptu. A je to! :)
 
 Podrobnější rozpis plánu výše na jednotlivé podkroky:
  * V lib rozlišit funs a native :
