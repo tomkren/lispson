@@ -1,13 +1,12 @@
 import json
 
 
-def eval_lispson(lispson, lib=None, output_code=False):
-    if lib is None:
-        lib = {'native': {}}
+def eval_lispson(lispson, lib, output_code=False):
     code, defs = decode(lispson, lib)
-    def_codes = mk_def_codes(defs, lib)
+    def_codes = defs.values()
+    defs_code = '\n'.join(def_codes)
 
-    exec('\n'.join(def_codes), lib['native'])
+    exec(defs_code, lib['native'])
     val = eval(code, lib['native'])
 
     if output_code:
@@ -39,13 +38,21 @@ def decode_acc(json_o, lib, defs):
 
 
 def decode_dict(json_dict, lib, defs):
+    head, body = decode_dict_2(json_dict, lib, defs)
+    if head is None:
+        return body
+    else:
+        return lib['target']['lam'](head, body)
+
+
+def decode_dict_2(json_dict, lib, defs):
     keys = list(json_dict)
     if len(keys) == 1:
         head = keys[0]
         body = decode_acc(json_dict[head], lib, defs)
-        return lib['target']['lam'](head, body)
+        return head, body
     else:
-        return json.dumps(json_dict)
+        return None, json.dumps(json_dict)
 
 
 def decode_list(json_list, lib, defs):
@@ -91,14 +98,21 @@ def handle_def(sym, lib, defs):
         sym_def = lib_defs[sym]
         if not isinstance(sym_def, str):
             defs[sym] = None  # So it won't recurse forever ..
-            sym_def = decode_acc(sym_def, lib, defs)
-            lib_defs[sym] = sym_def  # Again non-pure optimization ..
+
+            if isinstance(sym_def, dict):
+
+                head, body = decode_dict_2(sym_def, lib, defs)
+                if head is None:
+                    sym_def = lib['target']['def'](sym, body)
+                else:
+                    sym_def = lib['target']['def_fun'](sym, head, body)
+
+            else:
+                body = decode_acc(sym_def, lib, defs)
+                sym_def = lib['target']['def'](sym, body)
+
+            # lib_defs[sym] = sym_def  # Again non-pure optimization ..
         defs[sym] = sym_def
-
-
-def mk_def_codes(defs, lib):
-    mk_def = lib['target']['def']
-    return [mk_def(var, code) for var, code in defs.items()]
 
 
 # TESTS :
@@ -125,11 +139,12 @@ def run_tests():
         },
         'native': {
             'eq': lambda a, b: a == b,
-            'add': lambda a, b: a + b if not isinstance(a, dict) else dict(a, **b),
+            'add': lambda a, b: a + b,
             'sub': lambda a, b: a - b,
             'mul': lambda a, b: a * b,
             'mkv': lambda k, v: {k: v},
-            'mkp': lambda a, b: [a, b]
+            'mkp': lambda a, b: [a, b],
+            'add_dict': lambda a, b: dict(a, **b)
         },
         'defs': {
             'plus': 'add',
@@ -168,8 +183,8 @@ def run_tests():
     test(3, '[{"x,y":["add","x","y"]},1,2]')
     test(3, '[["lambda","x,y",["add","x","y"]],1,2]')
     test(65, '[["lambda","x,y",["add","x","y"]],23,42]')
-    test(['add', ["'", {'foo': 42}], ["'", {'bar': 23}]])
-    test(['add', {'foo': 42, "_": 1}, {'bar': 23, "_": 1}])
+    test(['add_dict', ["'", {'foo': 42}], ["'", {'bar': 23}]])
+    test(['add_dict', {'foo': 42, "_": 1}, {'bar': 23, "_": 1}])
     test(4, ['let_=_in_', 'x', 2, ["add", "x", "x"]])
     test(4, ['let_=_in_', 'x', ["add", 1, 1], ["add", "x", "x"]])
 
