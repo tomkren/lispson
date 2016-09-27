@@ -38,14 +38,14 @@ def decode_acc(json_o, lib, defs):
 
 
 def decode_dict(json_dict, lib, defs):
-    head, body = decode_dict_2(json_dict, lib, defs)
+    head, body = decode_dict_internal(json_dict, lib, defs)
     if head is None:
         return body
     else:
         return lib['target']['lam'](head, body)
 
 
-def decode_dict_2(json_dict, lib, defs):
+def decode_dict_internal(json_dict, lib, defs):
     keys = list(json_dict)
     if len(keys) == 1:
         head = keys[0]
@@ -101,7 +101,7 @@ def handle_def(sym, lib, defs):
 
             if isinstance(sym_def, dict):
 
-                head, body = decode_dict_2(sym_def, lib, defs)
+                head, body = decode_dict_internal(sym_def, lib, defs)
                 if head is None:
                     sym_def = lib['target']['def'](sym, body)
                 else:
@@ -161,13 +161,20 @@ def run_tests():
         }
     }
 
+    num_not_tested = 0
+    num_tested = 0
+
     def test(a, b=None):
         should_be, x = (a, b) if (b is not None) else (None, a)
         val = test_decode(lib, x)
         if should_be is not None:
+            nonlocal num_tested
+            num_tested += 1
             assert val == should_be, 'Decode test failed!'
             print('OK\n')
         else:
+            nonlocal num_not_tested
+            num_not_tested += 1
             print()
 
     test(4, '["add",2,2]')
@@ -208,6 +215,8 @@ def run_tests():
     test(23, ['sub', 'answer', 19])
     test(120, ['factorial', 5])
 
+    print('tested:', num_tested)
+    print('not tested:', num_not_tested)
     print('Everything tested was OK :)')
 
 
