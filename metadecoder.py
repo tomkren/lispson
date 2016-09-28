@@ -1,4 +1,47 @@
+import targets
 import json
+import tests
+
+
+def do_notation(lines):
+    return lines[0] + [do_notation(lines[1:])] if len(lines) > 1 else lines[0]
+
+
+def main():
+    meta_lib = {
+        'lang': targets.langs['python'],
+        'macros': {
+            'let': {"head, val, body": ["mkp", ["mkv", "head", "body"], 'val']},
+            'let*': {"head, val, body": ["mkp", ["mkv", "head", "body"], ['mkp', ["'", '*'], 'val']]},
+            'dot': {"obj, key": [['obj', '+', ["'", '.']], '+', 'key']},
+            'do': {"lines": ['mk_do', "lines"]}
+        },
+        'native': {
+            'mkv': lambda k, v: {k: v},
+            'mkp': lambda a, b: [a, b],
+            'mkl': lambda *xs: list(xs),
+            'mk_do': do_notation,
+            'get': lambda xs, i: xs[i],
+            'n_join': lambda xs: '\n'.join(xs),
+            'decode': decode,
+        },
+        'defs': {
+            'eval_lispson': {'lispson, lib, output_code': ['do', [
+                ['let*', 'code, defs', ['decode', 'lispson', 'lib']],
+                ['let', 'def_codes', [['dot', 'defs', 'values']]],
+                ['let', 'defs_code', ['n_join', 'def_codes']],
+                ['let', '_', ['exec', 'defs_code', ['get', 'lib', ["'", 'native']]]],
+                ['let', 'val', ['eval', 'code', ['get', 'lib', ["'", 'native']]]],
+                ['if', 'output_code', ["mkl", 'val', 'code', 'def_codes'], 'val']
+            ]]}
+        }
+    }
+
+    new_eval_lispson, code_str, def_codes = eval_lispson('eval_lispson', meta_lib, True)
+
+    tests.run_tests(new_eval_lispson)
+
+    print('\n'+'\n'.join(list(def_codes)))
 
 
 def eval_lispson(lispson, lib, output_code=False):
@@ -90,6 +133,10 @@ def decode_infix(lib, defs, a, op, b):
 def decode_quote(args):
     return json.dumps(args[0] if len(args) == 1 else args)
 
+# 'decode_quote': {
+#    'args': ['json.dumps', ['if', [['len', 'args'], '==', 1], ['at', 'args', 0], 'args']]
+# }
+
 
 def decode_macro(macro_name, args, lib, defs):
     macros = lib['macros']
@@ -128,3 +175,7 @@ def handle_def(sym, lib, defs):
                 sym_def = lib['lang']['target']['def'](sym, body)
 
         defs[sym] = sym_def
+
+
+if __name__ == '__main__':
+    main()
