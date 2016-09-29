@@ -10,7 +10,7 @@ langs = {
         },
         'infix': {  # TODO todle je nešťastný, udělat pořádně, pak něco jako tento jazyk podporuje tyto infixy
                     # TODO a pokud ne tak přepis na prefix adekvátní
-            '==', '!=', 'and', 'or', '+', '-', '*', '/', ',', 'is'
+            '==', '!=', 'and', 'or', '+', '-', '*', '/', ',', 'is', 'in'
         }
     }
 }
