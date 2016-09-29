@@ -6,11 +6,7 @@ import decoder
 # These will be overwritten in main
 eval_lispson = None
 decode_acc = None
-decode_dict = None
 decode_dict_internal = None
-decode_list = None
-decode_quote = None
-is_infix = None
 
 part = None
 part2 = None
@@ -38,10 +34,6 @@ def main():
             'get': lambda xs, i: xs[i],
             'tail': lambda xs: xs[1:],
             'n_join': lambda xs: '\n'.join(xs),
-            # 'decode_quote': decode_quote,
-            'decode_macro': decode_macro,
-            'decode_if': decode_if,
-            'decode_infix': decode_infix,
             'handle_def': handle_def,
             'json_dumps': json.dumps
         },
@@ -134,17 +126,29 @@ def main():
                     ]],
                     False
                 ]
+            },
+            'decode_infix': {'lib, defs, a, op, b':
+                ['do', [
+                    ['let', 'decoded_a', ['decode_acc', 'a', 'lib', 'defs']],
+                    ['let', 'decoded_b', ['decode_acc', 'b', 'lib', 'defs']],
+                    [['get', ['get', ['get', 'lib', ["'", 'lang']], ["'", 'target']], ["'", 'infix']], 'decoded_a', 'op', 'decoded_b']
+            ]]},
+            'decode_macro': {'macro_name, args, lib, defs': ['do', [
+                ['let', 'macros', ['get', 'lib', ["'", "macros"]]],
+                ['let', 'macro', ['get', 'macros', 'macro_name']],
+                ['let', 'macro_fun', ['eval_lispson', 'macro', 'lib', False]],
+                ['decode_acc', ['macro_fun', ['*', 'args']], 'lib', 'defs']
+            ]]},
+            'decode_if': {'decoded_args, lib':
+                [['get', ['get', ['get', 'lib', ["'", 'lang']], ["'", 'target']], ["'", 'if']], ['*', 'decoded_args']]
             }
-        }
+        },
     }
 
-    global eval_lispson, decode_acc, decode_dict, decode_dict_internal, decode_quote
+    global eval_lispson, decode_acc, decode_dict_internal
     eval_lispson, _, def_codes = decoder.eval_lispson('eval_lispson', meta_lib, True)
     decode_acc = decoder.eval_lispson('decode_acc', meta_lib)
-    decode_dict = decoder.eval_lispson('decode_dict', meta_lib)
     decode_dict_internal = decoder.eval_lispson('decode_dict_internal', meta_lib)
-    decode_quote = decoder.eval_lispson('decode_quote', meta_lib)
-    is_infix = decoder.eval_lispson('is_infix', meta_lib)
 
     global part, part2, part3
     # part,  _, def_codes_1 = decoder.eval_lispson('part', meta_lib, True)
@@ -157,33 +161,6 @@ def main():
     # print_defs(def_codes_2)
     # print_defs(def_codes_3)
     return num_tested
-
-
-def decode_infix(lib, defs, a, op, b):
-    decoded_a = decode_acc(a, lib, defs)
-    decoded_b = decode_acc(b, lib, defs)
-    return lib['lang']['target']['infix'](decoded_a, op, decoded_b)
-
-
-# def decode_quote(args):
-#    return json.dumps(args[0] if len(args) == 1 else args)
-
-
-def decode_macro(macro_name, args, lib, defs):
-    macros = lib['macros']
-    macro = macros[macro_name]
-    if not callable(macro):
-        macro = eval_lispson(macro, lib, False)
-        macros[macro_name] = macro  # Non-pure optimization saving the compiled macro (can be omitted)
-    return decode_acc(macro(*args), lib, defs)
-
-
-# If needs a special treatment because of if's laziness (we must not evaluate both branches)
-def decode_if(decoded_args, lib):
-    if len(decoded_args) == 3:
-        return lib['lang']['target']['if'](*decoded_args)
-    else:
-        raise ValueError('if must have 3 args', len(decoded_args))
 
 
 def handle_def(sym, lib, defs):
