@@ -7,6 +7,7 @@ import decoder
 eval_lispson = None
 decode_acc = None
 decode_dict = None
+decode_dict_internal = None
 
 part = None
 part2 = None
@@ -33,7 +34,6 @@ def main():
             'mk_do': do_notation,
             'get': lambda xs, i: xs[i],
             'n_join': lambda xs: '\n'.join(xs),
-            'decode_dict_internal': decode_dict_internal,
             'decode_list': decode_list,
             'handle_def': handle_def,
             'json_dumps': json.dumps
@@ -77,7 +77,7 @@ def main():
                 ]]
             },
             'add_dict': {'a, b': ['dict', 'a', ['**', 'b']]},  # todo udělat pak líp než přes add_dict ale spíš evalnout vnitřky objektů
-            'part': {'json_dict, lib, defs': [
+            'decode_dict_internal': {'json_dict, lib, defs': [
                 'let', 'keys', ['list', 'json_dict'],
                 ['if', [['len', 'keys'], '==', 1],
                     ['do', [
@@ -91,31 +91,23 @@ def main():
         }
     }
 
-    global eval_lispson, decode_acc, decode_dict
+    global eval_lispson, decode_acc, decode_dict, decode_dict_internal
     eval_lispson, _, def_codes = decoder.eval_lispson('eval_lispson', meta_lib, True)
     decode_acc = decoder.eval_lispson('decode_acc', meta_lib)
     decode_dict = decoder.eval_lispson('decode_dict', meta_lib)
+    decode_dict_internal = decoder.eval_lispson('decode_dict_internal', meta_lib)
 
-    global part  # , part2  # , part3
-    part,  _, def_codes_1 = decoder.eval_lispson('part', meta_lib, True)
+    global part, part2, part3
+    # part,  _, def_codes_1 = decoder.eval_lispson('part', meta_lib, True)
     # part2, _, def_codes_2 = decoder.eval_lispson('part2', meta_lib, True)
     # part3, _, def_codes_3 = decoder.eval_lispson('part3', meta_lib, True)
 
     num_tested = tests.run_tests(eval_lispson)
     print_defs(def_codes)
-    print_defs(def_codes_1)
+    # print_defs(def_codes_1)
     # print_defs(def_codes_2)
     # print_defs(def_codes_3)
     return num_tested
-
-
-def decode_dict_internal(json_dict, lib, defs):
-    #keys = list(json_dict)
-    return part(json_dict, lib, defs)
-    # if len(keys) == 1:
-    #     return part2(json_dict, lib, defs, keys)
-    # else:
-    #     return part(json_dict)
 
 
 def decode_list(json_list, lib, defs):
