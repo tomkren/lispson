@@ -38,8 +38,10 @@ def main():
             'decode_list': decode_list,
             'decode_quote': decode_quote,
             'decode_macro': decode_macro,
-            'handle_def': handle_def,
             'decode_if': decode_if,
+            'decode_infix': decode_infix,
+            'handle_def': handle_def,
+            'is_infix': is_infix,
             'json_dumps': json.dumps
         },
         'defs': {
@@ -92,26 +94,31 @@ def main():
                     ['add_dict', ['mkv', ["'", 'is_lambda'], False], ['mkv', ["'", 'json_str'], ['json_dumps', 'json_dict']]]
                 ]]
             },
-            'part': {'json_list, lib, defs': ['do', [
-                ['let', 'fun', ['decode_acc', ['get', 'json_list', 0], 'lib', 'defs']],
-                ['let', 'args', ['tail', 'json_list']],
-                ['if', ['fun', '==', ["'", "'"]],
-                    ['decode_quote', 'args'],
-                    ['if', ['fun', 'in', ['get', 'lib', ["'", 'macros']]],
-                        ['decode_macro', 'fun', 'args', 'lib', 'defs'],
-                        ['do', [
-                           ['let', 'decoded_args', ['list', ['map', {'o': ['decode_acc', 'o', 'lib', 'defs']}, 'args']]],  # todo je tu list(map(..))
-                           ['if', ['fun', '==', ["'", 'if']],
-                               ['decode_if', 'decoded_args', 'lib'],
-                               ['do', [
-                                   ['let', '_', ['handle_def', 'fun', 'lib', 'defs']],
-                                   [['get', ['get', ['get', 'lib', ["'", 'lang']], ["'", 'target']], ["'", 'app']], "fun", 'decoded_args']
-                               ]]
-                           ]
-                        ]]
-                    ]
+            'part': {'json_list, lib, defs':
+                ['if', ['is_infix', 'json_list', 'lib'],
+                    ['decode_infix', 'lib', 'defs', ['*', 'json_list']],
+                    ['do', [
+                        ['let', 'fun', ['decode_acc', ['get', 'json_list', 0], 'lib', 'defs']],
+                        ['let', 'args', ['tail', 'json_list']],
+                        ['if', ['fun', '==', ["'", "'"]],
+                            ['decode_quote', 'args'],
+                            ['if', ['fun', 'in', ['get', 'lib', ["'", 'macros']]],
+                                ['decode_macro', 'fun', 'args', 'lib', 'defs'],
+                                ['do', [
+                                   ['let', 'decoded_args', ['list', ['map', {'o': ['decode_acc', 'o', 'lib', 'defs']}, 'args']]],  # todo je tu list(map(..))
+                                   ['if', ['fun', '==', ["'", 'if']],
+                                       ['decode_if', 'decoded_args', 'lib'],
+                                       ['do', [
+                                           ['let', '_', ['handle_def', 'fun', 'lib', 'defs']],
+                                           [['get', ['get', ['get', 'lib', ["'", 'lang']], ["'", 'target']], ["'", 'app']], "fun", 'decoded_args']
+                                       ]]
+                                   ]
+                                ]]
+                            ]
+                        ]
+                    ]]
                 ]
-            ]]}
+            }
         }
     }
 
@@ -137,8 +144,6 @@ def main():
 def decode_list(json_list, lib, defs):
     if not json_list:  # Is empty ?
         return '[]'
-    if is_infix(json_list, lib):
-        return decode_infix(lib, defs, *json_list)
     return part(json_list, lib, defs)
 
 
