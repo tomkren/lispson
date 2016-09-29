@@ -8,6 +8,7 @@ eval_lispson = None
 decode_acc = None
 decode_dict = None
 decode_dict_internal = None
+decode_list = None
 
 part = None
 part2 = None
@@ -35,7 +36,6 @@ def main():
             'get': lambda xs, i: xs[i],
             'tail': lambda xs: xs[1:],
             'n_join': lambda xs: '\n'.join(xs),
-            'decode_list': decode_list,
             'decode_quote': decode_quote,
             'decode_macro': decode_macro,
             'decode_if': decode_if,
@@ -94,7 +94,7 @@ def main():
                     ['add_dict', ['mkv', ["'", 'is_lambda'], False], ['mkv', ["'", 'json_str'], ['json_dumps', 'json_dict']]]
                 ]]
             },
-            'part': {'json_list, lib, defs':
+            'decode_list': {'json_list, lib, defs':
                 ['if', ['not', 'json_list'],
                     ["'", '[]'],
                     ['if', ['is_infix', 'json_list', 'lib'],
@@ -132,22 +132,16 @@ def main():
     decode_dict_internal = decoder.eval_lispson('decode_dict_internal', meta_lib)
 
     global part, part2, part3
-    part,  _, def_codes_1 = decoder.eval_lispson('part', meta_lib, True)
+    # part,  _, def_codes_1 = decoder.eval_lispson('part', meta_lib, True)
     # part2, _, def_codes_2 = decoder.eval_lispson('part2', meta_lib, True)
     # part3, _, def_codes_3 = decoder.eval_lispson('part3', meta_lib, True)
 
     num_tested = tests.run_tests(eval_lispson)
     print_defs(def_codes)
-    print_defs(def_codes_1)
+    # print_defs(def_codes_1)
     # print_defs(def_codes_2)
     # print_defs(def_codes_3)
     return num_tested
-
-
-def decode_list(json_list, lib, defs):
-    # if not(json_list):  # Is empty ?
-    #     return '[]'
-    return part(json_list, lib, defs)
 
 
 def is_infix(json_list, lib):
