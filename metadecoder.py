@@ -6,6 +6,7 @@ import decoder
 # These will be overwritten in main
 eval_lispson = None
 decode_acc = None
+decode_dict = None
 
 part = None
 part2 = None
@@ -32,7 +33,6 @@ def main():
             'mk_do': do_notation,
             'get': lambda xs, i: xs[i],
             'n_join': lambda xs: '\n'.join(xs),
-            'decode_dict': decode_dict,
             'decode_dict_internal': decode_dict_internal,
             'decode_list': decode_list,
             'handle_def': handle_def,
@@ -66,7 +66,7 @@ def main():
                         ]
                     ]
             ]]},
-            'part': {'json_dict, lib, defs': ['do', [
+            'decode_dict': {'json_dict, lib, defs': ['do', [
                     ['let', 'decoded_dict', ['decode_dict_internal', 'json_dict', 'lib', 'defs']],
                     ['if', ['get', 'decoded_dict', ["'", 'is_lambda']],
                         [['get', ['get', ['get', 'lib', ["'", 'lang']], ["'", 'target']], ["'", "lam"]],
@@ -78,12 +78,13 @@ def main():
         }
     }
 
-    global eval_lispson, decode_acc
+    global eval_lispson, decode_acc, decode_dict
     eval_lispson, _, def_codes = decoder.eval_lispson('eval_lispson', meta_lib, True)
     decode_acc = decoder.eval_lispson('decode_acc', meta_lib)
+    decode_dict = decoder.eval_lispson('decode_dict', meta_lib)
 
-    global part #, part2  # , part3
-    part,  _, def_codes_1 = decoder.eval_lispson('part', meta_lib, True)
+    # global part , part2  # , part3
+    # part,  _, def_codes_1 = decoder.eval_lispson('part', meta_lib, True)
     # part2, _, def_codes_2 = decoder.eval_lispson('part2', meta_lib, True)
     # part3, _, def_codes_3 = decoder.eval_lispson('part3', meta_lib, True)
 
@@ -93,11 +94,6 @@ def main():
     # print_defs(def_codes_2)
     # print_defs(def_codes_3)
     return num_tested
-
-
-def decode_dict(json_dict, lib, defs):
-    #decoded_dict = decode_dict_internal(json_dict, lib, defs)
-    return part(json_dict, lib, defs)
 
 
 def decode_dict_internal(json_dict, lib, defs):
