@@ -33,6 +33,7 @@ def main():
             'get': lambda xs, i: xs[i],
             'n_join': lambda xs: '\n'.join(xs),
             'decode_dict': decode_dict,
+            'decode_dict_internal': decode_dict_internal,
             'decode_list': decode_list,
             'handle_def': handle_def,
         },
@@ -65,12 +66,14 @@ def main():
                         ]
                     ]
             ]]},
-            'part': {'lib, decoded_dict':
-                ['if', ['get', 'decoded_dict', ["'", 'is_lambda']],
-                    [['get', ['get', ['get', 'lib', ["'", 'lang']], ["'", 'target']], ["'", "lam"]],
-                     ['get', 'decoded_dict', ["'", 'head']], ['get', 'decoded_dict', ["'", 'body']]],
-                    ['get', 'decoded_dict', ["'", 'json_str']]
-                ]
+            'part': {'json_dict, lib, defs': ['do', [
+                    ['let', 'decoded_dict', ['decode_dict_internal', 'json_dict', 'lib', 'defs']],
+                    ['if', ['get', 'decoded_dict', ["'", 'is_lambda']],
+                        [['get', ['get', ['get', 'lib', ["'", 'lang']], ["'", 'target']], ["'", "lam"]],
+                         ['get', 'decoded_dict', ["'", 'head']], ['get', 'decoded_dict', ["'", 'body']]],
+                        ['get', 'decoded_dict', ["'", 'json_str']]
+                    ]
+                ]]
             }
         }
     }
@@ -93,8 +96,8 @@ def main():
 
 
 def decode_dict(json_dict, lib, defs):
-    decoded_dict = decode_dict_internal(json_dict, lib, defs)
-    return part(lib, decoded_dict)
+    #decoded_dict = decode_dict_internal(json_dict, lib, defs)
+    return part(json_dict, lib, defs)
 
 
 def decode_dict_internal(json_dict, lib, defs):
