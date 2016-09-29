@@ -10,6 +10,7 @@ decode_dict = None
 decode_dict_internal = None
 decode_list = None
 decode_quote = None
+is_infix = None
 
 part = None
 part2 = None
@@ -42,7 +43,6 @@ def main():
             'decode_if': decode_if,
             'decode_infix': decode_infix,
             'handle_def': handle_def,
-            'is_infix': is_infix,
             'json_dumps': json.dumps
         },
         'defs': {
@@ -125,6 +125,15 @@ def main():
             },
             'decode_quote': {
                 'args': ['json_dumps', ['if', [['len', 'args'], '==', 1], ['get', 'args', 0], 'args']]
+            },
+            'is_infix': {'json_list, lib':
+                ['if', [['len', 'json_list'], '==', 3],
+                    ['do', [
+                        ['let', 'op', ['get', 'json_list', 1]],
+                        [['isinstance', 'op', 'str'], 'and', ['op', 'in', ['get', ['get', 'lib', ["'", 'lang']], ["'", 'infix']]]]
+                    ]],
+                    False
+                ]
             }
         }
     }
@@ -135,6 +144,7 @@ def main():
     decode_dict = decoder.eval_lispson('decode_dict', meta_lib)
     decode_dict_internal = decoder.eval_lispson('decode_dict_internal', meta_lib)
     decode_quote = decoder.eval_lispson('decode_quote', meta_lib)
+    is_infix = decoder.eval_lispson('is_infix', meta_lib)
 
     global part, part2, part3
     # part,  _, def_codes_1 = decoder.eval_lispson('part', meta_lib, True)
@@ -147,14 +157,6 @@ def main():
     # print_defs(def_codes_2)
     # print_defs(def_codes_3)
     return num_tested
-
-
-def is_infix(json_list, lib):
-    if len(json_list) == 3:
-        op = json_list[1]
-        return isinstance(op, str) and op in lib['lang']['infix']
-    else:
-        return False
 
 
 def decode_infix(lib, defs, a, op, b):
