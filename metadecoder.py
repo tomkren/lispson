@@ -64,14 +64,19 @@ def main():
                             ['str', 'json_o']
                         ]
                     ]
-            ]]}
+            ]]},
+            'part': {'decoded_dict':
+                ['get', 'decoded_dict', ["'", 'json_str']]
+            }
         }
     }
 
-    global eval_lispson, decode_acc  # , part  # , part2, part3
+    global eval_lispson, decode_acc
     eval_lispson, _, def_codes_01 = decoder.eval_lispson('eval_lispson', meta_lib, True)
     decode_acc = decoder.eval_lispson('decode_acc', meta_lib)
-    # part,  _, def_codes_1 = decoder.eval_lispson('part', meta_lib, True)
+
+    global part  # , part2, part3
+    part,  _, def_codes_1 = decoder.eval_lispson('part', meta_lib, True)
     # part2, _, def_codes_2 = decoder.eval_lispson('part2', meta_lib, True)
     # part3, _, def_codes_3 = decoder.eval_lispson('part3', meta_lib, True)
 
@@ -88,7 +93,7 @@ def decode_dict(json_dict, lib, defs):
     if decoded_dict['is_lambda']:
         return lib['lang']['target']['lam'](decoded_dict['head'], decoded_dict['body'])
     else:
-        return decoded_dict['json_str']
+        return part(decoded_dict)
 
 
 def decode_dict_internal(json_dict, lib, defs):
