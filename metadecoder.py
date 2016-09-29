@@ -9,6 +9,7 @@ decode_acc = None
 decode_dict = None
 decode_dict_internal = None
 decode_list = None
+decode_quote = None
 
 part = None
 part2 = None
@@ -36,7 +37,7 @@ def main():
             'get': lambda xs, i: xs[i],
             'tail': lambda xs: xs[1:],
             'n_join': lambda xs: '\n'.join(xs),
-            'decode_quote': decode_quote,
+            # 'decode_quote': decode_quote,
             'decode_macro': decode_macro,
             'decode_if': decode_if,
             'decode_infix': decode_infix,
@@ -121,15 +122,19 @@ def main():
                         ]]
                     ]
                 ]
+            },
+            'decode_quote': {
+                'args': ['json_dumps', ['if', [['len', 'args'], '==', 1], ['get', 'args', 0], 'args']]
             }
         }
     }
 
-    global eval_lispson, decode_acc, decode_dict, decode_dict_internal
+    global eval_lispson, decode_acc, decode_dict, decode_dict_internal, decode_quote
     eval_lispson, _, def_codes = decoder.eval_lispson('eval_lispson', meta_lib, True)
     decode_acc = decoder.eval_lispson('decode_acc', meta_lib)
     decode_dict = decoder.eval_lispson('decode_dict', meta_lib)
     decode_dict_internal = decoder.eval_lispson('decode_dict_internal', meta_lib)
+    decode_quote = decoder.eval_lispson('decode_quote', meta_lib)
 
     global part, part2, part3
     # part,  _, def_codes_1 = decoder.eval_lispson('part', meta_lib, True)
@@ -158,12 +163,8 @@ def decode_infix(lib, defs, a, op, b):
     return lib['lang']['target']['infix'](decoded_a, op, decoded_b)
 
 
-def decode_quote(args):
-    return json.dumps(args[0] if len(args) == 1 else args)
-
-# 'decode_quote': {
-#    'args': ['json.dumps', ['if', [['len', 'args'], '==', 1], ['at', 'args', 0], 'args']]
-# }
+# def decode_quote(args):
+#    return json.dumps(args[0] if len(args) == 1 else args)
 
 
 def decode_macro(macro_name, args, lib, defs):
