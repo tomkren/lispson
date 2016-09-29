@@ -1,9 +1,19 @@
+import json
+
 import decoder
 import targets
+import metadecoder
 
 
 def test_decoder(eval_fun, lib, lispson):
-    val, code_str, def_codes = eval_fun(lispson, lib, output_code=True)
+
+    if isinstance(lispson, str):
+        try:
+            lispson = json.loads(lispson)
+        except ValueError:
+            pass
+
+    val, code_str, def_codes = eval_fun(lispson, lib, True)
     print(lispson)
     if def_codes:
         print(' >> '+'\n    '.join(def_codes))
@@ -111,6 +121,10 @@ def run_tests(eval_fun):
     print('not tested:', num_not_tested)
     print('Everything tested was OK :)')
 
+    return num_tested
+
 
 if __name__ == '__main__':
-    run_tests(decoder.eval_lispson)
+    num_tested = run_tests(decoder.eval_lispson)
+    num_tested += metadecoder.main()
+    print('\nnum_tested from all tests:', num_tested)

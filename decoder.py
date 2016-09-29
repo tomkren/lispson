@@ -1,4 +1,5 @@
 import json
+import tests
 
 
 def eval_lispson(lispson, lib, output_code=False):
@@ -16,11 +17,6 @@ def eval_lispson(lispson, lib, output_code=False):
 
 
 def decode(lispson, lib):
-    if isinstance(lispson, str):
-        try:
-            lispson = json.loads(lispson)
-        except ValueError:
-            pass
     defs = {}
     code_str = decode_acc(lispson, lib, defs)
     return code_str, defs
@@ -128,3 +124,7 @@ def handle_def(sym, lib, defs):
                 sym_def = lib['lang']['target']['def'](sym, body)
 
         defs[sym] = sym_def
+
+
+if __name__ == '__main__':
+    tests.run_tests(eval_lispson)

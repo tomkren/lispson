@@ -3,9 +3,17 @@ import json
 import tests
 import decoder
 
+# These will be overwritten in main
+eval_lispson = None
+decode_acc = None
 
-def do_notation(lines):
-    return lines[0] + [do_notation(lines[1:])] if len(lines) > 1 else lines[0]
+part = None
+part2 = None
+part3 = None
+
+
+def print_defs(def_codes):
+    print('\n' + '\n'.join(list(def_codes)))
 
 
 def main():
@@ -24,7 +32,9 @@ def main():
             'mk_do': do_notation,
             'get': lambda xs, i: xs[i],
             'n_join': lambda xs: '\n'.join(xs),
-            'decode': decode,
+            'decode_dict': decode_dict,
+            'decode_list': decode_list,
+            'handle_def': handle_def,
         },
         'defs': {
             'eval_lispson': {'lispson, lib, output_code': ['do', [
@@ -34,42 +44,43 @@ def main():
                 ['let', '_', ['exec', 'defs_code', ['get', 'lib', ["'", 'native']]]],
                 ['let', 'val', ['eval', 'code', ['get', 'lib', ["'", 'native']]]],
                 ['if', 'output_code', ["mkl", 'val', 'code', 'def_codes'], 'val']
+            ]]},
+            'decode': {'lispson, lib': ['do', [
+                    ['let', 'defs', {}],
+                    ['let', 'code_str', ['decode_acc', 'lispson', 'lib', 'defs']],
+                    ['mkl', 'code_str', 'defs']
+            ]]},
+            'decode_acc': {'json_o, lib, defs':
+                ['let', 't', ['type', 'json_o'],
+                ['if', ['t', 'is', 'list'],
+                    ['decode_list', 'json_o', 'lib', 'defs'],
+                    ['if', ['t', 'is', 'dict'],
+                        ['decode_dict', 'json_o', 'lib', 'defs'],
+                        ['if', ['t', 'is', 'str'],
+                            ['do', [
+                                ['let', '_', ['handle_def', 'json_o', 'lib', 'defs']],
+                                ['str', 'json_o']
+                            ]],
+                            ['str', 'json_o']
+                        ]
+                    ]
             ]]}
         }
     }
 
-    global eval_lispson
+    global eval_lispson, decode_acc  # , part  # , part2, part3
+    eval_lispson, _, def_codes_01 = decoder.eval_lispson('eval_lispson', meta_lib, True)
+    decode_acc = decoder.eval_lispson('decode_acc', meta_lib)
+    # part,  _, def_codes_1 = decoder.eval_lispson('part', meta_lib, True)
+    # part2, _, def_codes_2 = decoder.eval_lispson('part2', meta_lib, True)
+    # part3, _, def_codes_3 = decoder.eval_lispson('part3', meta_lib, True)
 
-    eval_lispson, _, def_codes = decoder.eval_lispson('eval_lispson', meta_lib, True)
-
-    tests.run_tests(eval_lispson)
-
-    print('\n'+'\n'.join(list(def_codes)))
-
-
-eval_lispson = None  # Will be overwritten in main
-
-
-def decode(lispson, lib):
-    if isinstance(lispson, str):
-        try:
-            lispson = json.loads(lispson)
-        except ValueError:
-            pass
-    defs = {}
-    code_str = decode_acc(lispson, lib, defs)
-    return code_str, defs
-
-
-def decode_acc(json_o, lib, defs):
-    t = type(json_o)
-    if t is list:
-        return decode_list(json_o, lib, defs)
-    elif t is dict:
-        return decode_dict(json_o, lib, defs)
-    elif t is str:
-        handle_def(json_o, lib, defs)
-    return str(json_o)
+    num_tested = tests.run_tests(eval_lispson)
+    print_defs(def_codes_01)
+    # print_defs(def_codes_1)
+    # print_defs(def_codes_2)
+    # print_defs(def_codes_3)
+    return num_tested
 
 
 def decode_dict(json_dict, lib, defs):
@@ -167,6 +178,10 @@ def handle_def(sym, lib, defs):
                 sym_def = lib['lang']['target']['def'](sym, body)
 
         defs[sym] = sym_def
+
+
+def do_notation(lines):
+    return lines[0] + [do_notation(lines[1:])] if len(lines) > 1 else lines[0]
 
 
 if __name__ == '__main__':
