@@ -77,7 +77,8 @@ def main():
                 ]]
             },
             'add_dict': {'a, b': ['dict', 'a', ['**', 'b']]},  # todo udělat pak líp než přes add_dict ale spíš evalnout vnitřky objektů
-            'part': {'json_dict, lib, defs, keys':
+            'part': {'json_dict, lib, defs': [
+                'let', 'keys', ['list', 'json_dict'],
                 ['if', [['len', 'keys'], '==', 1],
                     ['do', [
                         ['let', 'head', ['get', 'keys', 0]],
@@ -85,7 +86,7 @@ def main():
                         ['add_dict', ['mkv', ["'", 'is_lambda'], True], ['add_dict', ['mkv', ["'", 'head'], 'head'], ['mkv', ["'", 'body'], 'body']]]
                     ]],
                     ['add_dict', ['mkv', ["'", 'is_lambda'], False], ['mkv', ["'", 'json_str'], ['json_dumps', 'json_dict']]]
-                ]
+                ]]
             }
         }
     }
@@ -109,8 +110,8 @@ def main():
 
 
 def decode_dict_internal(json_dict, lib, defs):
-    keys = list(json_dict)
-    return part(json_dict, lib, defs, keys)
+    #keys = list(json_dict)
+    return part(json_dict, lib, defs)
     # if len(keys) == 1:
     #     return part2(json_dict, lib, defs, keys)
     # else:
