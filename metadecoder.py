@@ -36,6 +36,7 @@ def main():
             'n_join': lambda xs: '\n'.join(xs),
             'decode_list': decode_list,
             'handle_def': handle_def,
+            'decode_if': decode_if,
             'json_dumps': json.dumps
         },
         'defs': {
@@ -88,10 +89,15 @@ def main():
                     ['add_dict', ['mkv', ["'", 'is_lambda'], False], ['mkv', ["'", 'json_str'], ['json_dumps', 'json_dict']]]
                 ]]
             },
-            'part': {'lib, defs, fun, decoded_args': ['do', [
-                ['let', '_', ['handle_def', 'fun', 'lib', 'defs']],
-                [['get', ['get', ['get', 'lib', ["'", 'lang']], ["'", 'target']], ["'", 'app']], "fun", 'decoded_args']
-             ]]}
+            'part': {'lib, defs, fun, decoded_args':
+                ['if', ['fun', '==', ["'", 'if']],
+                    ['decode_if', 'decoded_args', 'lib'],
+                    ['do', [
+                        ['let', '_', ['handle_def', 'fun', 'lib', 'defs']],
+                        [['get', ['get', ['get', 'lib', ["'", 'lang']], ["'", 'target']], ["'", 'app']], "fun", 'decoded_args']
+                    ]]
+                ]
+            }
         }
     }
 
@@ -126,9 +132,8 @@ def decode_list(json_list, lib, defs):
     if fun in lib['macros']:  # Is the function a macro ?
         return decode_macro(fun, args, lib, defs)
     decoded_args = [decode_acc(o, lib, defs) for o in args]
-    if fun == "if":
-        return decode_if(decoded_args, lib)
     return part(lib, defs, fun, decoded_args)
+
 
 
 def is_infix(json_list, lib):
