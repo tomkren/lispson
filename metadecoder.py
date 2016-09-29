@@ -24,7 +24,7 @@ def main():
             'let': {"head, val, body": ["mkp", ["mkv", "head", "body"], 'val']},
             'let*': {"head, val, body": ["mkp", ["mkv", "head", "body"], ['mkp', ["'", '*'], 'val']]},
             'dot': {"obj, key": [['obj', '+', ["'", '.']], '+', 'key']},
-            'do': {"lines": ['mk_do', "lines"]}
+            'do': {"lines": ['mk_do', "lines"]},
         },
         'native': {
             'mkv': lambda k, v: {k: v},
@@ -36,6 +36,7 @@ def main():
             'decode_dict_internal': decode_dict_internal,
             'decode_list': decode_list,
             'handle_def': handle_def,
+            'json_dumps': json.dumps
         },
         'defs': {
             'eval_lispson': {'lispson, lib, output_code': ['do', [
@@ -74,7 +75,12 @@ def main():
                         ['get', 'decoded_dict', ["'", 'json_str']]
                     ]
                 ]]
-            }
+            },
+            'part': {'json_dict': ['add_dict',
+                  ['mkv', ["'", 'is_lambda'], False],
+                  ['mkv', ["'", 'json_str'], ['json_dumps', 'json_dict']]
+             ]},
+            'add_dict': {'a, b': ['dict', 'a', ['**', 'b']]} # todo udělat pak líp než přes add_dict ale spíš evalnout vnitřky objektů
         }
     }
 
@@ -83,14 +89,14 @@ def main():
     decode_acc = decoder.eval_lispson('decode_acc', meta_lib)
     decode_dict = decoder.eval_lispson('decode_dict', meta_lib)
 
-    # global part , part2  # , part3
-    # part,  _, def_codes_1 = decoder.eval_lispson('part', meta_lib, True)
+    global part, part2  # , part3
+    part,  _, def_codes_1 = decoder.eval_lispson('part', meta_lib, True)
     # part2, _, def_codes_2 = decoder.eval_lispson('part2', meta_lib, True)
     # part3, _, def_codes_3 = decoder.eval_lispson('part3', meta_lib, True)
 
     num_tested = tests.run_tests(eval_lispson)
     print_defs(def_codes)
-    # print_defs(def_codes_1)
+    print_defs(def_codes_1)
     # print_defs(def_codes_2)
     # print_defs(def_codes_3)
     return num_tested
@@ -103,7 +109,7 @@ def decode_dict_internal(json_dict, lib, defs):
         body = decode_acc(json_dict[head], lib, defs)
         return {'is_lambda': True, 'head': head, 'body': body}
     else:
-        return {'is_lambda': False, 'json_str': json.dumps(json_dict)}
+        return part(json_dict)
 
 
 def decode_list(json_list, lib, defs):
