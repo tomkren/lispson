@@ -3,19 +3,6 @@ import json
 import tests
 import decoder
 
-# These will be overwritten in main
-eval_lispson = None
-decode_acc = None
-decode_dict_internal = None
-
-part = None
-part2 = None
-part3 = None
-
-
-def print_defs(def_codes):
-    print('\n' + '\n'.join(list(def_codes)))
-
 
 def main():
     meta_lib = {
@@ -32,9 +19,10 @@ def main():
             'mkl': lambda *xs: list(xs),
             'mk_do': do_notation,
             'get': lambda xs, i: xs[i],
+            'set_val': set_val,
             'tail': lambda xs: xs[1:],
             'n_join': lambda xs: '\n'.join(xs),
-            'handle_def': handle_def,
+            # 'handle_def': handle_def,
             'json_dumps': json.dumps
         },
         'defs': {
@@ -141,52 +129,59 @@ def main():
             ]]},
             'decode_if': {'decoded_args, lib':
                 [['get', ['get', ['get', 'lib', ["'", 'lang']], ["'", 'target']], ["'", 'if']], ['*', 'decoded_args']]
-            }
+            },
+            'handle_def': {'sym, lib, defs': [
+                'let', 'lib_defs', ['get', 'lib', ["'", 'defs']],
+                ['if', [['sym', 'in', 'lib_defs'], 'and', ['not', ['sym', 'in', 'defs']]],
+                    ['let', 'sym_def', ['get', 'lib_defs', 'sym'],
+                        ['if', ['isinstance', 'sym_def', 'str'],
+                            ['set_val', 'defs', 'sym', 'sym_def'],
+                            ['do', [
+                                ['let', '_', ['set_val', 'defs', 'sym', 'None']],
+                                ['if', ['isinstance', 'sym_def', 'dict'],
+                                    ['handle_def_dict', 'sym', 'lib', 'defs', 'sym_def'],
+                                    ['handle_def_non_dict', 'sym', 'lib', 'defs', 'sym_def']]
+                            ]]
+                        ]],
+                    'None'
+                ]
+            ]},
+            'handle_def_dict': {'sym, lib, defs, sym_def': ['do', [
+                ['let', 'decoded_dict', ['decode_dict_internal', 'sym_def', 'lib', 'defs']],
+                ['let', 'target', ['get', ['get', 'lib', ["'", 'lang']], ["'", 'target']]],
+                ['let', 'sym_def',
+                    ['if', ['get', 'decoded_dict', ["'", 'is_lambda']],
+                        [['get', 'target', ["'", 'def_fun']], 'sym', ['get', 'decoded_dict', ["'", 'head']], ['get', 'decoded_dict', ["'", 'body']]],
+                        [['get', 'target', ["'", 'def']], 'sym', ['get', 'decoded_dict', ["'", 'json_str']]]]],
+                ['set_val', 'defs', 'sym', 'sym_def']
+            ]]},
+            'handle_def_non_dict': {'sym, lib, defs, sym_def': ['do', [
+                ['let', 'body', ['decode_acc', 'sym_def', 'lib', 'defs']],
+                ['let', 'sym_def',
+                 [['get', ['get', ['get', 'lib', ["'", 'lang']], ["'", 'target']], ["'", 'def']], 'sym', 'body']],
+                ['set_val', 'defs', 'sym', 'sym_def']
+            ]]}
         },
     }
 
-    global eval_lispson, decode_acc, decode_dict_internal
     eval_lispson, _, def_codes = decoder.eval_lispson('eval_lispson', meta_lib, True)
-    decode_acc = decoder.eval_lispson('decode_acc', meta_lib)
-    decode_dict_internal = decoder.eval_lispson('decode_dict_internal', meta_lib)
-
-    global part, part2, part3
-    # part,  _, def_codes_1 = decoder.eval_lispson('part', meta_lib, True)
-    # part2, _, def_codes_2 = decoder.eval_lispson('part2', meta_lib, True)
-    # part3, _, def_codes_3 = decoder.eval_lispson('part3', meta_lib, True)
 
     num_tested = tests.run_tests(eval_lispson)
     print_defs(def_codes)
-    # print_defs(def_codes_1)
-    # print_defs(def_codes_2)
-    # print_defs(def_codes_3)
     return num_tested
-
-
-def handle_def(sym, lib, defs):
-    lib_defs = lib['defs']
-    if sym in lib_defs and sym not in defs:
-        sym_def = lib_defs[sym]
-        if not isinstance(sym_def, str):
-            defs[sym] = None  # So it won't recurse forever ..
-
-            if isinstance(sym_def, dict):
-
-                decoded_dict = decode_dict_internal(sym_def, lib, defs)
-                if decoded_dict['is_lambda']:
-                    sym_def = lib['lang']['target']['def_fun'](sym, decoded_dict['head'], decoded_dict['body'])
-                else:
-                    sym_def = lib['lang']['target']['def'](sym, decoded_dict['json_str'])
-
-            else:
-                body = decode_acc(sym_def, lib, defs)
-                sym_def = lib['lang']['target']['def'](sym, body)
-
-        defs[sym] = sym_def
 
 
 def do_notation(lines):
     return lines[0] + [do_notation(lines[1:])] if len(lines) > 1 else lines[0]
+
+
+def set_val(o, key, val):
+    o[key] = val
+    return val
+
+
+def print_defs(def_codes):
+    print('\n' + '\n'.join(list(def_codes)))
 
 
 if __name__ == '__main__':
