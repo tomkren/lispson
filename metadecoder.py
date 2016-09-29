@@ -65,12 +65,11 @@ def main():
                         ]
                     ]
             ]]},
-            'part': {'decoded_dict':
-                ['get', 'decoded_dict', ["'", 'json_str']]
-            },
-            'part2': {'lib, decoded_dict': [
-                    ['get', ['get', ['get', 'lib', ["'", 'lang']], ["'", 'target']], ["'", "lam"]],
-                    ['get', 'decoded_dict', ["'", 'head']], ['get', 'decoded_dict', ["'", 'body']]
+            'part': {'lib, decoded_dict':
+                ['if', ['get', 'decoded_dict', ["'", 'is_lambda']],
+                    [['get', ['get', ['get', 'lib', ["'", 'lang']], ["'", 'target']], ["'", "lam"]],
+                     ['get', 'decoded_dict', ["'", 'head']], ['get', 'decoded_dict', ["'", 'body']]],
+                    ['get', 'decoded_dict', ["'", 'json_str']]
                 ]
             }
         }
@@ -80,9 +79,9 @@ def main():
     eval_lispson, _, def_codes = decoder.eval_lispson('eval_lispson', meta_lib, True)
     decode_acc = decoder.eval_lispson('decode_acc', meta_lib)
 
-    global part, part2  # , part3
+    global part #, part2  # , part3
     part,  _, def_codes_1 = decoder.eval_lispson('part', meta_lib, True)
-    part2, _, def_codes_2 = decoder.eval_lispson('part2', meta_lib, True)
+    # part2, _, def_codes_2 = decoder.eval_lispson('part2', meta_lib, True)
     # part3, _, def_codes_3 = decoder.eval_lispson('part3', meta_lib, True)
 
     num_tested = tests.run_tests(eval_lispson)
@@ -95,10 +94,7 @@ def main():
 
 def decode_dict(json_dict, lib, defs):
     decoded_dict = decode_dict_internal(json_dict, lib, defs)
-    if decoded_dict['is_lambda']:
-        return part2(lib, decoded_dict)
-    else:
-        return part(decoded_dict)
+    return part(lib, decoded_dict)
 
 
 def decode_dict_internal(json_dict, lib, defs):
