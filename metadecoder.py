@@ -35,6 +35,7 @@ def main():
             'get': lambda xs, i: xs[i],
             'n_join': lambda xs: '\n'.join(xs),
             'decode_list': decode_list,
+            'decode_quote': decode_quote,
             'decode_macro': decode_macro,
             'handle_def': handle_def,
             'decode_if': decode_if,
@@ -91,18 +92,21 @@ def main():
                 ]]
             },
             'part': {'lib, defs, fun, args':
-                ['if', ['fun', 'in', ['get', 'lib', ["'", 'macros']]],
-                    ['decode_macro', 'fun', 'args', 'lib', 'defs'],
-                    ['do', [
-                       ['let', 'decoded_args', ['list', ['map', {'o': ['decode_acc', 'o', 'lib', 'defs']}, 'args']]],  # todo je tu list(map(..))
-                       ['if', ['fun', '==', ["'", 'if']],
-                           ['decode_if', 'decoded_args', 'lib'],
-                           ['do', [
-                               ['let', '_', ['handle_def', 'fun', 'lib', 'defs']],
-                               [['get', ['get', ['get', 'lib', ["'", 'lang']], ["'", 'target']], ["'", 'app']], "fun", 'decoded_args']
-                           ]]
-                       ]
-                    ]]
+                ['if', ['fun', '==', ["'", "'"]],
+                    ['decode_quote', 'args'],
+                    ['if', ['fun', 'in', ['get', 'lib', ["'", 'macros']]],
+                        ['decode_macro', 'fun', 'args', 'lib', 'defs'],
+                        ['do', [
+                           ['let', 'decoded_args', ['list', ['map', {'o': ['decode_acc', 'o', 'lib', 'defs']}, 'args']]],  # todo je tu list(map(..))
+                           ['if', ['fun', '==', ["'", 'if']],
+                               ['decode_if', 'decoded_args', 'lib'],
+                               ['do', [
+                                   ['let', '_', ['handle_def', 'fun', 'lib', 'defs']],
+                                   [['get', ['get', ['get', 'lib', ["'", 'lang']], ["'", 'target']], ["'", 'app']], "fun", 'decoded_args']
+                               ]]
+                           ]
+                        ]]
+                    ]
                 ]
             }
         }
@@ -134,8 +138,6 @@ def decode_list(json_list, lib, defs):
         return decode_infix(lib, defs, *json_list)
     fun = decode_acc(json_list[0], lib, defs)
     args = json_list[1:]
-    if fun == "'":  # Is the function "the quote" ?
-        return decode_quote(args)
     return part(lib, defs, fun, args)
 
 
