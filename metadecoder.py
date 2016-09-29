@@ -76,11 +76,15 @@ def main():
                     ]
                 ]]
             },
+            'add_dict': {'a, b': ['dict', 'a', ['**', 'b']]},  # todo udělat pak líp než přes add_dict ale spíš evalnout vnitřky objektů
             'part': {'json_dict': ['add_dict',
                   ['mkv', ["'", 'is_lambda'], False],
                   ['mkv', ["'", 'json_str'], ['json_dumps', 'json_dict']]
-             ]},
-            'add_dict': {'a, b': ['dict', 'a', ['**', 'b']]} # todo udělat pak líp než přes add_dict ale spíš evalnout vnitřky objektů
+            ]},
+            'part2': {'json_dict, lib, defs, head': ['do', [
+                ['let', 'body', ['decode_acc', ['get', 'json_dict', 'head'], 'lib', 'defs']],
+                ['add_dict', ['mkv', ["'", 'is_lambda'], True], ['add_dict', ['mkv', ["'", 'head'], 'head'], ['mkv', ["'", 'body'], 'body']]]
+            ]]}
         }
     }
 
@@ -91,13 +95,13 @@ def main():
 
     global part, part2  # , part3
     part,  _, def_codes_1 = decoder.eval_lispson('part', meta_lib, True)
-    # part2, _, def_codes_2 = decoder.eval_lispson('part2', meta_lib, True)
+    part2, _, def_codes_2 = decoder.eval_lispson('part2', meta_lib, True)
     # part3, _, def_codes_3 = decoder.eval_lispson('part3', meta_lib, True)
 
     num_tested = tests.run_tests(eval_lispson)
     print_defs(def_codes)
     print_defs(def_codes_1)
-    # print_defs(def_codes_2)
+    print_defs(def_codes_2)
     # print_defs(def_codes_3)
     return num_tested
 
@@ -106,8 +110,7 @@ def decode_dict_internal(json_dict, lib, defs):
     keys = list(json_dict)
     if len(keys) == 1:
         head = keys[0]
-        body = decode_acc(json_dict[head], lib, defs)
-        return {'is_lambda': True, 'head': head, 'body': body}
+        return part2(json_dict, lib, defs, head)
     else:
         return part(json_dict)
 
