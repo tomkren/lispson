@@ -1,6 +1,7 @@
 import targets
 import json
 import tests
+import decoder
 
 
 def do_notation(lines):
@@ -37,25 +38,16 @@ def main():
         }
     }
 
-    new_eval_lispson, code_str, def_codes = eval_lispson('eval_lispson', meta_lib, True)
+    global eval_lispson
 
-    tests.run_tests(new_eval_lispson)
+    eval_lispson, _, def_codes = decoder.eval_lispson('eval_lispson', meta_lib, True)
+
+    tests.run_tests(eval_lispson)
 
     print('\n'+'\n'.join(list(def_codes)))
 
 
-def eval_lispson(lispson, lib, output_code=False):
-    code, defs = decode(lispson, lib)
-    def_codes = defs.values()
-    defs_code = '\n'.join(def_codes)
-
-    exec(defs_code, lib['native'])
-    val = eval(code, lib['native'])
-
-    if output_code:
-        return val, code, def_codes
-    else:
-        return val
+eval_lispson = None  # Will be overwritten in main
 
 
 def decode(lispson, lib):
@@ -142,7 +134,7 @@ def decode_macro(macro_name, args, lib, defs):
     macros = lib['macros']
     macro = macros[macro_name]
     if not callable(macro):
-        macro = eval_lispson(macro, lib)
+        macro = eval_lispson(macro, lib, False)
         macros[macro_name] = macro  # Non-pure optimization saving the compiled macro (can be omitted)
     return decode_acc(macro(*args), lib, defs)
 
