@@ -81,7 +81,9 @@ def main():
                   ['mkv', ["'", 'is_lambda'], False],
                   ['mkv', ["'", 'json_str'], ['json_dumps', 'json_dict']]
             ]},
-            'part2': {'json_dict, lib, defs, head': ['do', [
+            'part2': {'json_dict, lib, defs, keys': ['do', [
+
+                ['let', 'head', ['get', 'keys', 0]],
                 ['let', 'body', ['decode_acc', ['get', 'json_dict', 'head'], 'lib', 'defs']],
                 ['add_dict', ['mkv', ["'", 'is_lambda'], True], ['add_dict', ['mkv', ["'", 'head'], 'head'], ['mkv', ["'", 'body'], 'body']]]
             ]]}
@@ -109,8 +111,7 @@ def main():
 def decode_dict_internal(json_dict, lib, defs):
     keys = list(json_dict)
     if len(keys) == 1:
-        head = keys[0]
-        return part2(json_dict, lib, defs, head)
+        return part2(json_dict, lib, defs, keys)
     else:
         return part(json_dict)
 
