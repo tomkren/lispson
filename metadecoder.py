@@ -18,11 +18,10 @@ def main():
             'mkp': lambda a, b: [a, b],
             'mkl': lambda *xs: list(xs),
             'do_notation': lambda *lines: do_notation(lines),
-            'get': lambda xs, i: xs[i],
+            'get': lambda o, *keys: get_by_keys(o, keys),
             'set_val': set_val,
             'tail': lambda xs: xs[1:],
             'n_join': lambda xs: '\n'.join(xs),
-            # 'handle_def': handle_def,
             'json_dumps': json.dumps
         },
         'defs': {
@@ -57,7 +56,7 @@ def main():
             'decode_dict': {'json_dict, lib, defs': ['do',
                     ['let', 'decoded_dict', ['decode_dict_internal', 'json_dict', 'lib', 'defs']],
                     ['if', ['get', 'decoded_dict', ["'", 'is_lambda']],
-                        [['get', ['get', ['get', 'lib', ["'", 'lang']], ["'", 'target']], ["'", "lam"]],
+                        [['get', 'lib', ["'", 'lang'], ["'", 'target'], ["'", "lam"]],
                          ['get', 'decoded_dict', ["'", 'head']], ['get', 'decoded_dict', ["'", 'body']]],
                         ['get', 'decoded_dict', ["'", 'json_str']]
                     ]
@@ -78,30 +77,21 @@ def main():
             'decode_list': {'json_list, lib, defs':
                 ['if', ['not', 'json_list'],
                     ["'", '[]'],
-                    ['if', ['is_infix', 'json_list', 'lib'],
-                        ['decode_infix', 'lib', 'defs', ['*', 'json_list']],
-                        ['do',
-                            ['let', 'fun', ['decode_acc', ['get', 'json_list', 0], 'lib', 'defs']],
-                            ['let', 'args', ['tail', 'json_list']],
-                            ['if', ['fun', '==', ["'", "'"]],
-                                ['decode_quote', 'args'],
-                                ['if', ['fun', 'in', ['get', 'lib', ["'", 'macros']]],
-                                    ['decode_macro', 'fun', 'args', 'lib', 'defs'],
-                                    ['do',
-                                       ['let', 'decoded_args', ['list', ['map', {'o': ['decode_acc', 'o', 'lib', 'defs']}, 'args']]],  # todo je tu list(map(..))
-                                       ['if', ['fun', '==', ["'", 'if']],
-                                           ['decode_if', 'decoded_args', 'lib'],
-                                           ['do',
-                                               ['let', '_', ['handle_def', 'fun', 'lib', 'defs']],
-                                               [['get', ['get', ['get', 'lib', ["'", 'lang']], ["'", 'target']], ["'", 'app']], "fun", 'decoded_args']
-                                           ]
-                                       ]
-                                    ]
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
+                ['if', ['is_infix', 'json_list', 'lib'],
+                    ['decode_infix', 'lib', 'defs', ['*', 'json_list']],
+                ['do',
+                ['let', 'fun', ['decode_acc', ['get', 'json_list', 0], 'lib', 'defs']],
+                ['let', 'args', ['tail', 'json_list']],
+                ['if', ['fun', '==', ["'", "'"]],
+                    ['decode_quote', 'args'],
+                ['if', ['fun', 'in', ['get', 'lib', ["'", 'macros']]],
+                    ['decode_macro', 'fun', 'args', 'lib', 'defs'],
+                ['do', ['let', 'decoded_args', ['list', ['map', {'o': ['decode_acc', 'o', 'lib', 'defs']}, 'args']]],  # todo je tu list(map(..))
+                ['if', ['fun', '==', ["'", 'if']],
+                    ['decode_if', 'decoded_args', 'lib'],
+                ['do',
+                ['let', '_', ['handle_def', 'fun', 'lib', 'defs']],
+                [['get', 'lib', ["'", 'lang'], ["'", 'target'], ["'", 'app']], "fun", 'decoded_args']]]]]]]]]
             },
             'decode_quote': {
                 'args': ['json_dumps', ['if', [['len', 'args'], '==', 1], ['get', 'args', 0], 'args']]
@@ -110,7 +100,7 @@ def main():
                 ['if', [['len', 'json_list'], '==', 3],
                     ['do',
                         ['let', 'op', ['get', 'json_list', 1]],
-                        [['isinstance', 'op', 'str'], 'and', ['op', 'in', ['get', ['get', 'lib', ["'", 'lang']], ["'", 'infix']]]]
+                        [['isinstance', 'op', 'str'], 'and', ['op', 'in', ['get', 'lib', ["'", 'lang'], ["'", 'infix']]]]
                     ],
                     False
                 ]
@@ -119,7 +109,7 @@ def main():
                 ['do',
                     ['let', 'decoded_a', ['decode_acc', 'a', 'lib', 'defs']],
                     ['let', 'decoded_b', ['decode_acc', 'b', 'lib', 'defs']],
-                    [['get', ['get', ['get', 'lib', ["'", 'lang']], ["'", 'target']], ["'", 'infix']], 'decoded_a', 'op', 'decoded_b']
+                    [['get', 'lib', ["'", 'lang'], ["'", 'target'], ["'", 'infix']], 'decoded_a', 'op', 'decoded_b']
             ]},
             'decode_macro': {'macro_name, args, lib, defs': ['do',
                 ['let', 'macros', ['get', 'lib', ["'", "macros"]]],
@@ -128,7 +118,7 @@ def main():
                 ['decode_acc', ['macro_fun', ['*', 'args']], 'lib', 'defs']
             ]},
             'decode_if': {'decoded_args, lib':
-                [['get', ['get', ['get', 'lib', ["'", 'lang']], ["'", 'target']], ["'", 'if']], ['*', 'decoded_args']]
+                [['get', 'lib', ["'", 'lang'], ["'", 'target'], ["'", 'if']], ['*', 'decoded_args']]
             },
             'handle_def': {'sym, lib, defs': [
                 'let', 'lib_defs', ['get', 'lib', ["'", 'defs']],
@@ -148,7 +138,7 @@ def main():
             ]},
             'handle_def_dict': {'sym, lib, defs, sym_def': ['do',
                 ['let', 'decoded_dict', ['decode_dict_internal', 'sym_def', 'lib', 'defs']],
-                ['let', 'target', ['get', ['get', 'lib', ["'", 'lang']], ["'", 'target']]],
+                ['let', 'target', ['get', 'lib', ["'", 'lang'], ["'", 'target']]],
                 ['let', 'sym_def',
                     ['if', ['get', 'decoded_dict', ["'", 'is_lambda']],
                         [['get', 'target', ["'", 'def_fun']], 'sym', ['get', 'decoded_dict', ["'", 'head']], ['get', 'decoded_dict', ["'", 'body']]],
@@ -158,7 +148,7 @@ def main():
             'handle_def_non_dict': {'sym, lib, defs, sym_def': ['do',
                 ['let', 'body', ['decode_acc', 'sym_def', 'lib', 'defs']],
                 ['let', 'sym_def',
-                 [['get', ['get', ['get', 'lib', ["'", 'lang']], ["'", 'target']], ["'", 'def']], 'sym', 'body']],
+                 [['get', 'lib', ["'", 'lang'], ["'", 'target'], ["'", 'def']], 'sym', 'body']],
                 ['set_val', 'defs', 'sym', 'sym_def']
             ]}
         },
@@ -178,6 +168,10 @@ def do_notation(lines):
 def set_val(o, key, val):
     o[key] = val
     return val
+
+
+def get_by_keys(o, keys):
+    return get_by_keys(o[keys[0]], keys[1:]) if keys else o
 
 
 def print_defs(def_codes):
