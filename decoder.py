@@ -58,7 +58,7 @@ def decode_list(json_list, lib, defs, natives):
         return '[]'
     if is_infix(json_list, lib):
         return decode_infix(lib, defs, natives, *json_list)
-    fun = json_list[0]  # json_list[0]  # decode_acc(json_list[0], lib, defs, natives) # todo trochu nekonzistentní fun by mělo být eště nedekodovaný
+    fun = json_list[0]
     args = json_list[1:]
 
     fun_is_str = isinstance(fun, str)
