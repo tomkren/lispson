@@ -17,47 +17,54 @@ def eval_lispson(lispson, lib, output_code=False):
 
 
 def decode(lispson, lib):
-    defs = {}
-    natives = set()
-    code_str = decode_acc(lispson, lib, defs, natives)
-    print('natives (for ', lispson, '): ', natives)
-    return code_str, defs
+    acc = {
+        'vars': set(),
+        'natives': set(),
+        'defs': {}
+    }
+    code_str = decode_acc(lispson, lib, acc)
+    print('natives (for ', lispson, '): ', acc['natives']) # todo lépe
+    return code_str, acc['defs']
 
 
-def decode_acc(json_o, lib, defs, natives):
+def decode_acc(json_o, lib, acc):
     t = type(json_o)
     if t is list:
-        return decode_list(json_o, lib, defs, natives)
+        return decode_list(json_o, lib, acc)
     elif t is dict:
-        return decode_dict(json_o, lib, defs, natives)
+        return decode_dict(json_o, lib, acc)
     elif t is str:
-        handle_def(json_o, lib, defs, natives)
+        handle_def(json_o, lib, acc)
     return str(json_o)
 
 
-def decode_dict(json_dict, lib, defs, natives):
-    decoded_dict = decode_dict_internal(json_dict, lib, defs, natives)
+def decode_dict(json_dict, lib, acc):
+    decoded_dict = decode_dict_internal(json_dict, lib, acc)
     if decoded_dict['is_lambda']:
         return lib['lang']['target']['lam'](decoded_dict['head'], decoded_dict['body'])
     else:
         return decoded_dict['json_str']
 
 
-def decode_dict_internal(json_dict, lib, defs, natives):
+def decode_dict_internal(json_dict, lib, acc):
     keys = list(json_dict)
     if len(keys) == 1:
         head = keys[0]
-        body = decode_acc(json_dict[head], lib, defs, natives)
+        head_vars = {var.strip() for var in head.split(',')}
+        old_vars = acc['vars']
+        acc['vars'] = old_vars.union(head_vars)
+        body = decode_acc(json_dict[head], lib, acc)
+        acc['vars'] = old_vars
         return {'is_lambda': True, 'head': head, 'body': body}
     else:
         return {'is_lambda': False, 'json_str': json.dumps(json_dict)}
 
 
-def decode_list(json_list, lib, defs, natives):
+def decode_list(json_list, lib, acc):
     if not json_list:  # Is empty ?
         return '[]'
     if is_infix(json_list, lib):
-        return decode_infix(lib, defs, natives, *json_list)
+        return decode_infix(lib, acc, *json_list)
     fun = json_list[0]
     args = json_list[1:]
 
@@ -67,17 +74,17 @@ def decode_list(json_list, lib, defs, natives):
         if fun == "'":  # Is the function "the quote" ?
             return decode_quote(args)
         if fun in lib['macros']:  # Is the function a macro ?
-            return decode_macro(fun, args, lib, defs, natives)
+            return decode_macro(fun, args, lib, acc)
         if fun == "if":
-            return decode_if(args, lib, defs, natives)
-        handle_def(fun, lib, defs, natives)  # Handles definitions if needed.
+            return decode_if(args, lib, acc)
+        handle_def(fun, lib, acc)  # Handles definitions if needed.
 
-    decoded_fun = fun if fun_is_str else decode_acc(fun, lib, defs, natives)
-    return lib['lang']['target']['app'](decoded_fun, decode_args(args, lib, defs, natives))
+    decoded_fun = fun if fun_is_str else decode_acc(fun, lib, acc)
+    return lib['lang']['target']['app'](decoded_fun, decode_args(args, lib, acc))
 
 
-def decode_args(args, lib, defs, natives):
-    return [decode_acc(o, lib, defs, natives) for o in args]
+def decode_args(args, lib, acc):
+    return [decode_acc(o, lib, acc) for o in args]
 
 
 def is_infix(json_list, lib):
@@ -88,9 +95,10 @@ def is_infix(json_list, lib):
         return False
 
 
-def decode_infix(lib, defs, natives, a, op, b):
-    decoded_a = decode_acc(a, lib, defs, natives)
-    decoded_b = decode_acc(b, lib, defs, natives)
+def decode_infix(lib, acc, a, op, b):
+    decoded_a = decode_acc(a, lib, acc)
+    decoded_b = decode_acc(b, lib, acc)
+    acc['natives'].add(('op', op))  # todo better handling
     return lib['lang']['target']['infix'](decoded_a, op, decoded_b)
 
 
@@ -98,26 +106,27 @@ def decode_quote(args):
     return json.dumps(args[0] if len(args) == 1 else args)
 
 
-def decode_macro(macro_name, args, lib, defs, natives):
+def decode_macro(macro_name, args, lib, acc):
     macros = lib['macros']
     macro = macros[macro_name]
     if not callable(macro):
         macro = eval_lispson(macro, lib)
         macros[macro_name] = macro  # Non-pure optimization saving the compiled macro (can be omitted)
-    return decode_acc(macro(*args), lib, defs, natives)
+    return decode_acc(macro(*args), lib, acc)
 
 
 # If needs a special treatment because of if's laziness
 # (we must not evaluate both branches, so it cannot be a Python function)
-def decode_if(args, lib, defs, natives):
+def decode_if(args, lib, acc):
     if len(args) == 3:
-        decoded_args = decode_args(args, lib, defs, natives)
+        decoded_args = decode_args(args, lib, acc)
         return lib['lang']['target']['if'](*decoded_args)
     else:
         raise ValueError('if must have 3 args', len(args))
 
 
-def handle_def(sym, lib, defs, natives):
+def handle_def(sym, lib, acc):
+    defs = acc['defs']
     lib_defs = lib['defs']
     if sym in lib_defs:  # and sym not in defs:
         if sym not in defs:
@@ -126,20 +135,18 @@ def handle_def(sym, lib, defs, natives):
                 defs[sym] = None  # So it won't recurse forever ..
 
                 if isinstance(sym_def, dict):
-
-                    decoded_dict = decode_dict_internal(sym_def, lib, defs, natives)
+                    decoded_dict = decode_dict_internal(sym_def, lib, acc)
                     if decoded_dict['is_lambda']:
                         sym_def = lib['lang']['target']['def_fun'](sym, decoded_dict['head'], decoded_dict['body'])
                     else:
                         sym_def = lib['lang']['target']['def'](sym, decoded_dict['json_str'])
-
                 else:
-                    body = decode_acc(sym_def, lib, defs, natives)
+                    body = decode_acc(sym_def, lib, acc)
                     sym_def = lib['lang']['target']['def'](sym, body)
 
             defs[sym] = sym_def
-    else:
-        natives.add(sym)
+    elif sym not in acc['vars']:
+        acc['natives'].add(sym)
 
 
 if __name__ == '__main__':
