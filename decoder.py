@@ -23,7 +23,7 @@ def decode(lispson, lib):
         'defs': {}
     }
     code_str = decode_acc(lispson, lib, acc)
-    print('natives (for ', lispson, '): ', acc['natives']) # todo lépe
+    print('natives (for ', lispson, '): ', acc['natives'])  # todo lépe
     return code_str, acc['defs']
 
 
