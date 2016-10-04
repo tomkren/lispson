@@ -12,5 +12,18 @@ langs = {
                     # TODO a pokud ne tak přepis na prefix adekvátní
             '==', '!=', 'and', 'or', '+', '-', '*', '/', ',', 'is', 'in'
         }
+    },
+    'javascript': {
+        'target': {
+            'app': lambda fun, args: fun+'('+(', '.join(args))+')',
+            'lam': lambda head, body: 'function('+head+'){return '+body+';}',
+            'if': lambda p, a, b: '('+p+' ? '+a+' : '+b+')',
+            'def': lambda var, code: 'var '+var+' = '+code+';',
+            'def_fun': lambda name, head, body: 'function '+name+'('+head+'){ return '+body+';}',
+            'infix': lambda a, op, b: '('+a+' '+op+' '+b+')'
+        },
+        'infix': {
+            '==', '!=', 'and', 'or', '+', '-', '*', '/', ',', 'is', 'in'  # todo !
+        }
     }
 }
