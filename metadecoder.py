@@ -156,10 +156,13 @@ def main():
         },
     }
 
-    eval_lispson, _, def_codes = decoder.eval_lispson('eval_lispson', meta_lib, True)
+    eval_lispson, _, def_codes, natives = decoder.eval_lispson('eval_lispson', meta_lib, output_all=True)
 
     num_tested = tests.run_tests(eval_lispson)
     print_defs(def_codes)
+
+    print('\n(meta_)eval_lispson natives:', natives)
+
     return num_tested
 
 

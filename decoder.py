@@ -2,18 +2,20 @@ import json
 import tests
 
 
-def eval_lispson(lispson, lib, output_code=False):
-    code, defs = decode(lispson, lib)
+def eval_lispson(lispson, lib, output_code=False, output_all=False):
+    code, defs, natives = decode(lispson, lib)
     def_codes = defs.values()
     defs_code = '\n'.join(def_codes)
 
     exec(defs_code, lib['native'])
     val = eval(code, lib['native'])
 
+    if output_all:
+        return val, code, def_codes, natives
     if output_code:
         return val, code, def_codes
     else:
-        return val
+        return val, natives  # todo HAX aby se nerozbil metadecoder
 
 
 def decode(lispson, lib):
@@ -23,8 +25,8 @@ def decode(lispson, lib):
         'defs': {}
     }
     code_str = decode_acc(lispson, lib, acc)
-    print('natives (for ', lispson, '): ', acc['natives'])  # todo lépe
-    return code_str, acc['defs']
+    # print('natives (for ', lispson, '): ', acc['natives'])  # todo lépe
+    return code_str, acc['defs'], acc['natives']
 
 
 def decode_acc(json_o, lib, acc):
@@ -110,8 +112,9 @@ def decode_macro(macro_name, args, lib, acc):
     macros = lib['macros']
     macro = macros[macro_name]
     if not callable(macro):
-        macro = eval_lispson(macro, lib)
+        macro, macro_natives = eval_lispson(macro, lib, False)
         macros[macro_name] = macro  # Non-pure optimization saving the compiled macro (can be omitted)
+        acc['natives'].update(macro_natives)
     return decode_acc(macro(*args), lib, acc)
 
 
