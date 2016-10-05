@@ -42,9 +42,19 @@ def decode_acc(json_o, lib, acc):
         return decode_list(json_o, lib, acc)
     elif t is dict:
         return decode_dict(json_o, lib, acc)
+    elif t is bool:
+        return decode_bool(json_o, lib)
     elif t is str:
         handle_def(json_o, lib, acc)
     return str(json_o)
+
+
+def decode_bool(b, lib):
+    b_str = str(b)
+    if 'bool' in lib['lang']:
+        return lib['lang']['bool'][b_str]
+    else:
+        return b_str
 
 
 def decode_dict(json_dict, lib, acc):

@@ -33,14 +33,25 @@ def js_test():
     lib = {
         'lang': targets.langs['javascript'],
         'native': {
-            'mkv': lambda k, v: {k: v}
+            'mkv': lambda k, v: {k: v},
+            'mkp': lambda a, b: [a, b]
         },
         'defs': {
             'add': {'x, y': ['x', '+', 'y']},
-            'add2': 'add'
+            'add2': 'add',
+            'inc': {'x': ['add', 'x', 1]},
+            'eq': {'a, b': ['a', '==', 'b']},
+            'even': {'n': ['if', ['eq', 'n', 0], True, ['odd', ['sub', 'n', 1]]]},
+            'odd': {'n': ['if', ['eq', 'n', 0], False, ['even', ['sub', 'n', 1]]]},
+            'sub': {'a, b': ['a', '-', 'b']},
+            'answer': 42,
+            'ans': {'': 42},
+            'foo': ["'", 'bar'],
+            'factorial': {'n': ['if', ['n', '==', 0], 1, ['n', '*', ['factorial', ['n', '-', 1]]]]}
         },
         'macros': {  # todo: aby bylo nepovinný
-            'lambda': {"head, body": ["mkv", "head", "body"]}
+            'lambda': {"head, body": ["mkv", "head", "body"]},
+            'let': {"head, val, body": ["mkp", ["mkv", "head", "body"], 'val']}
         }
     }
 

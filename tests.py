@@ -9,6 +9,7 @@ import lispson_js
 tests = [
     [4, ['add', 2, 2]],
     [4, ["add2", 2, 2]],
+    [4, [2, '+', 2]],
     ['Hello world!', ["add", ["'", "Hello "], ["'", "world!"]]],
     ['Hello world!', ["add", "'Hello '", "'world!'"]],
     [5, ["len", ["'", "hello"]]],
@@ -20,7 +21,26 @@ tests = [
     [1, ["len", ["'", {'foo': 42}]]],
     [3, [{"x,y": ["add", "x", "y"]}, 1, 2]],
     [3, [["lambda", "x, y", ["add", "x", "y"]], 1, 2]],
-    [65, [["lambda", "x,y", ["add", "x", "y"]], 23, 42]]
+    [65, [["lambda", "x,y", ["add", "x", "y"]], 23, 42]],
+    [4, ['let', 'x', 2, ["add", "x", "x"]]],
+    [4, ['let', 'x', ["add", 1, 1], ["add", "x", "x"]]],
+    [2, ['inc', 1]],
+    [42, ['if', True, 42, 23]],
+    [23, ['if', False, 42, 23]],
+    [23, ['if', ['eq', 42, 23], 42, 23]],
+    [True, ['even', 0]],
+    [False, ['odd', 0]],
+    [False, ['even', 1]],
+    [True, ['odd', 1]],
+    [True, ['even', 42]],
+    [False, ['odd', 42]],
+    [False, ['even', 23]],
+    [True, ['odd', 23]],
+    [42, 'answer'],
+    ['bar', 'foo'],
+    [23, ['sub', 'answer', 19]],
+    [120, ['factorial', 5]],
+    [42, ['ans']]
 ]
 
 
@@ -92,40 +112,16 @@ def run_tests(eval_fun):
     for t in tests:
         test(t[0], t[1])
 
-    test(4, ['let', 'x', 2, ["add", "x", "x"]])
-    test(4, ['let', 'x', ["add", 1, 1], ["add", "x", "x"]])
-
-    test(2, ['inc', 1])
-    test(42, ['if', True, 42, 23])
-    test(23, ['if', False, 42, 23])
-    test(23, ['if', ['eq', 42, 23], 42, 23])
-
-    test(True, ['even', 0])
-    test(False, ['odd', 0])
-    test(False, ['even', 1])
-    test(True, ['odd', 1])
-    test(True, ['even', 42])
-    test(False, ['odd', 42])
-    test(False, ['even', 23])
-    test(True, ['odd', 23])
-
-    test(42, 'answer')
-    test('bar', 'foo')
-
-    test(23, ['sub', 'answer', 19])
-    test(120, ['factorial', 5])
-
-    test(4, [2, '+', 2])
-
-    test(['add_dict', ["'", {'foo': 42}], ["'", {'bar': 23}]])
-    test(['add_dict', {'foo': 42, "_": 1}, {'bar': 23, "_": 1}])
-
-    test('add')
-
+    # todo : make ok in lispson_js and move to tests
     test(6, ['let2', 'x, y', ["'", 4, 2], ['x', '+', 'y']])
     test([1, 2, 3], ['mkl', 1, [1, '+', 1], 3])
 
-    test(42, ['ans'])
+    # tests without yet without should_be
+    test(['add_dict', ["'", {'foo': 42}], ["'", {'bar': 23}]])
+    test(['add_dict', {'foo': 42, "_": 1}, {'bar': 23, "_": 1}])
+    test('add')
+
+
 
     print('tested:', num_tested)
     print('not tested:', num_not_tested)

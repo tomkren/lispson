@@ -32,7 +32,7 @@ langs = {
             'if': lambda p, a, b: '('+p+' ? '+a+' : '+b+')',
             'def': lambda var, code: 'var '+var+' = '+code+';',
             'def_fun': lambda name, head, body: 'function '+name+' ('+head+') {\n    return '+body+';\n}',
-            'def_fun_with_code': def_fun_with_code,
+            'def_fun_with_code': def_fun_with_code,  # todo konzistentně !
             'infix': lambda a, op, b: '('+a+' '+op+' '+b+')'
         },
         'infix': {
@@ -40,6 +40,10 @@ langs = {
         },
         'defs': {
             'len': '_.size'
+        },
+        'bool': {
+            'True': 'true',
+            'False': 'false'
         }
     }
 }

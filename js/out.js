@@ -6,11 +6,14 @@ var tests = [
     return add(2, 2);
 })],
 [4, (function () {
-    var add2 = add;
     function add (x, y) {
         return (x + y);
     }
+    var add2 = add;
     return add2(2, 2);
+})],
+[4, (function () {
+    return (2 + 2);
 })],
 ["Hello world!", (function () {
     function add (x, y) {
@@ -46,7 +49,7 @@ var tests = [
 })],
 [2, (function () {
     var len = _.size;
-    return len({"foo": 42, "bar": 23});
+    return len({"bar": 23, "foo": 42});
 })],
 [1, (function () {
     var len = _.size;
@@ -69,5 +72,185 @@ var tests = [
         return (x + y);
     }
     return (function(x,y){return add(x, y);})(23, 42);
+})],
+[4, (function () {
+    function add (x, y) {
+        return (x + y);
+    }
+    return (function(x){return add(x, x);})(2);
+})],
+[4, (function () {
+    function add (x, y) {
+        return (x + y);
+    }
+    return (function(x){return add(x, x);})(add(1, 1));
+})],
+[2, (function () {
+    function add (x, y) {
+        return (x + y);
+    }
+    function inc (x) {
+        return add(x, 1);
+    }
+    return inc(1);
+})],
+[42, (function () {
+    return (true ? 42 : 23);
+})],
+[23, (function () {
+    return (false ? 42 : 23);
+})],
+[23, (function () {
+    function eq (a, b) {
+        return (a == b);
+    }
+    return (eq(42, 23) ? 42 : 23);
+})],
+[true, (function () {
+    function odd (n) {
+        return (eq(n, 0) ? false : even(sub(n, 1)));
+    }
+    function sub (a, b) {
+        return (a - b);
+    }
+    function eq (a, b) {
+        return (a == b);
+    }
+    function even (n) {
+        return (eq(n, 0) ? true : odd(sub(n, 1)));
+    }
+    return even(0);
+})],
+[false, (function () {
+    function odd (n) {
+        return (eq(n, 0) ? false : even(sub(n, 1)));
+    }
+    function sub (a, b) {
+        return (a - b);
+    }
+    function eq (a, b) {
+        return (a == b);
+    }
+    function even (n) {
+        return (eq(n, 0) ? true : odd(sub(n, 1)));
+    }
+    return odd(0);
+})],
+[false, (function () {
+    function odd (n) {
+        return (eq(n, 0) ? false : even(sub(n, 1)));
+    }
+    function sub (a, b) {
+        return (a - b);
+    }
+    function eq (a, b) {
+        return (a == b);
+    }
+    function even (n) {
+        return (eq(n, 0) ? true : odd(sub(n, 1)));
+    }
+    return even(1);
+})],
+[true, (function () {
+    function odd (n) {
+        return (eq(n, 0) ? false : even(sub(n, 1)));
+    }
+    function sub (a, b) {
+        return (a - b);
+    }
+    function eq (a, b) {
+        return (a == b);
+    }
+    function even (n) {
+        return (eq(n, 0) ? true : odd(sub(n, 1)));
+    }
+    return odd(1);
+})],
+[true, (function () {
+    function odd (n) {
+        return (eq(n, 0) ? false : even(sub(n, 1)));
+    }
+    function sub (a, b) {
+        return (a - b);
+    }
+    function eq (a, b) {
+        return (a == b);
+    }
+    function even (n) {
+        return (eq(n, 0) ? true : odd(sub(n, 1)));
+    }
+    return even(42);
+})],
+[false, (function () {
+    function odd (n) {
+        return (eq(n, 0) ? false : even(sub(n, 1)));
+    }
+    function sub (a, b) {
+        return (a - b);
+    }
+    function eq (a, b) {
+        return (a == b);
+    }
+    function even (n) {
+        return (eq(n, 0) ? true : odd(sub(n, 1)));
+    }
+    return odd(42);
+})],
+[false, (function () {
+    function odd (n) {
+        return (eq(n, 0) ? false : even(sub(n, 1)));
+    }
+    function sub (a, b) {
+        return (a - b);
+    }
+    function eq (a, b) {
+        return (a == b);
+    }
+    function even (n) {
+        return (eq(n, 0) ? true : odd(sub(n, 1)));
+    }
+    return even(23);
+})],
+[true, (function () {
+    function odd (n) {
+        return (eq(n, 0) ? false : even(sub(n, 1)));
+    }
+    function sub (a, b) {
+        return (a - b);
+    }
+    function eq (a, b) {
+        return (a == b);
+    }
+    function even (n) {
+        return (eq(n, 0) ? true : odd(sub(n, 1)));
+    }
+    return odd(23);
+})],
+[42, (function () {
+    var answer = 42;
+    return answer;
+})],
+["bar", (function () {
+    var foo = "bar";
+    return foo;
+})],
+[23, (function () {
+    var answer = 42;
+    function sub (a, b) {
+        return (a - b);
+    }
+    return sub(answer, 19);
+})],
+[120, (function () {
+    function factorial (n) {
+        return ((n == 0) ? 1 : (n * factorial((n - 1))));
+    }
+    return factorial(5);
+})],
+[42, (function () {
+    function ans () {
+        return 42;
+    }
+    return ans();
 })],
 ];
