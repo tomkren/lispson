@@ -121,8 +121,6 @@ def run_tests(eval_fun):
     test(['add_dict', {'foo': 42, "_": 1}, {'bar': 23, "_": 1}])
     test('add')
 
-
-
     print('tested:', num_tested)
     print('not tested:', num_not_tested)
     print('Everything tested was OK :)')
