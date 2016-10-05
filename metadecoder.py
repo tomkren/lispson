@@ -127,7 +127,7 @@ def main():
                 ['if', [['sym', 'in', 'lib_defs'], 'and', ['not', ['sym', 'in', 'defs']]],
                     ['let', 'sym_def', ['get', 'lib_defs', 'sym'],
                         ['if', ['isinstance', 'sym_def', 'str'],
-                            ['set_val', 'defs', 'sym', 'sym_def'],
+                            ['set_val', 'defs', 'sym', [['gets', 'lib', 'lang', 'target', 'def'], 'sym', 'sym_def']],
                             ['do',
                                 ['let', '_', ['set_val', 'defs', 'sym', 'None']],
                                 ['if', ['isinstance', 'sym_def', 'dict'],

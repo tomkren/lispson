@@ -1,5 +1,6 @@
 import json
 import tests
+import targets
 
 
 def eval_lispson(lispson, lib, output_code=False, output_all=False):
@@ -24,6 +25,12 @@ def decode(lispson, lib):
         'natives': set(),
         'defs': {}
     }
+
+    lib_defs = lib['defs']
+    lang_defs = lib['lang']['defs']
+    all_defs = dict(lang_defs, **lib_defs)
+    lib['defs'] = all_defs
+
     code_str = decode_acc(lispson, lib, acc)
     # print('natives (for ', lispson, '): ', acc['natives'])  # todo lépe
     return code_str, acc['defs'], acc['natives']
@@ -112,7 +119,8 @@ def decode_macro(macro_name, args, lib, acc):
     macros = lib['macros']
     macro = macros[macro_name]
     if not callable(macro):
-        macro, macro_natives = eval_lispson(macro, lib, False)
+        hax_lib = dict(lib, lang=targets.langs['python'])  # TODO hax !!! udělat pořádně
+        macro, macro_natives = eval_lispson(macro, hax_lib, False)
         macros[macro_name] = macro  # Non-pure optimization saving the compiled macro (can be omitted)
         acc['natives'].update(macro_natives)
     return decode_acc(macro(*args), lib, acc)
@@ -131,10 +139,14 @@ def decode_if(args, lib, acc):
 def handle_def(sym, lib, acc):
     defs = acc['defs']
     lib_defs = lib['defs']
-    if sym in lib_defs:  # and sym not in defs:
+    if sym in lib_defs:
         if sym not in defs:
             sym_def = lib_defs[sym]
-            if not isinstance(sym_def, str):
+
+            if isinstance(sym_def, str):
+                body = decode_acc(sym_def, lib, acc)
+                sym_def = lib['lang']['target']['def'](sym, body)
+            else:
                 defs[sym] = None  # So it won't recurse forever ..
 
                 if isinstance(sym_def, dict):

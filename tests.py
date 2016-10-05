@@ -3,6 +3,25 @@ import json
 import decoder
 import targets
 import metadecoder
+import lispson_js
+
+
+tests = [
+    [4, ['add', 2, 2]],
+    [4, ["add2", 2, 2]],
+    ['Hello world!', ["add", ["'", "Hello "], ["'", "world!"]]],
+    ['Hello world!', ["add", "'Hello '", "'world!'"]],
+    [5, ["len", ["'", "hello"]]],
+    [2, ["len", ["'", ["hello ", "world!"]]]],
+    [2, ["len", ["'", "hello ", "world!"]]],
+    [0, ["len", ["'"]]],
+    [0, ["len", []]],
+    [2, ["len", {'foo': 42, 'bar': 23}]],
+    [1, ["len", ["'", {'foo': 42}]]],
+    [3, [{"x,y": ["add", "x", "y"]}, 1, 2]],
+    [3, [["lambda", "x, y", ["add", "x", "y"]], 1, 2]],
+    [65, [["lambda", "x,y", ["add", "x", "y"]], 23, 42]]
+]
 
 
 def test_decoder(eval_fun, lib, lispson):
@@ -34,6 +53,7 @@ def run_tests(eval_fun):
         },
         'defs': {
             'add': {'x, y': ['x', '+', 'y']},
+            'add2': 'add',
             'sub': {'a, b': ['a', '-', 'b']},
             'mul': {'a, b': ['a', '*', 'b']},
             'eq': {'a, b': ['a', '==', 'b']},
@@ -69,19 +89,9 @@ def run_tests(eval_fun):
             num_not_tested += 1
             print()
 
-    test(4, '["add",2,2]')
-    test('Hello world!', '''["add","'Hello '","'world!'"]''')
-    test('Hello world!', ["add", ["'", "Hello "], ["'", "world!"]])
-    test(5, ["len", ["'", "hello"]])
-    test(2, '''["len",["'",["hello ","world!"]]]''')
-    test(2, ["len", ["'", "hello ", "world!"]])
-    test(0, ["len", ["'"]])
-    test(0, ["len", []])
-    test(2, ["len", {'foo': 42, 'bar': 23}])
-    test(1, ["len", ["'", {'foo': 42}]])
-    test(3, '[{"x,y":["add","x","y"]},1,2]')
-    test(3, '[["lambda","x,y",["add","x","y"]],1,2]')
-    test(65, '[["lambda","x,y",["add","x","y"]],23,42]')
+    for t in tests:
+        test(t[0], t[1])
+
     test(4, ['let', 'x', 2, ["add", "x", "x"]])
     test(4, ['let', 'x', ["add", 1, 1], ["add", "x", "x"]])
 
@@ -125,6 +135,7 @@ def run_tests(eval_fun):
 
 
 if __name__ == '__main__':
-    num_tested = run_tests(decoder.eval_lispson)
-    num_tested += metadecoder.main()
-    print('\nnum_tested from all tests:', num_tested)
+    total_num_tested = run_tests(decoder.eval_lispson)
+    total_num_tested += metadecoder.main()
+    lispson_js.js_test()
+    print('\nnum_tested from all tests:', total_num_tested)
