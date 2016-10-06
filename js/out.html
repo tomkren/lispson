@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>lispson js out</title>
+    <title>lispson_js tests</title>
     <script src="https://cdn.jsdelivr.net/jquery/3.1.1/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/lodash/4.16.3/lodash.min.js"></script>
     <script src="out.js"></script>
@@ -11,7 +11,7 @@
     <div id="out"></div>
     <script>
         var results = _.map(tests, function (p) {
-            return p[0] === p[1]();
+            return _.isEqual(p[0], p[1]());
         });
 
         var numTests = _.size(results);

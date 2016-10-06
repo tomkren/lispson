@@ -39,7 +39,9 @@ langs = {
             '==', '!=', 'and', 'or', '+', '-', '*', '/', ',', 'is', 'in'  # todo !
         },
         'defs': {
-            'len': '_.size'
+            'len': '_.size',
+            'mkl': '(function(...xs){return xs;})',  # TODO --- HAX !!! ... vyjasnit
+            'add_dict': '(function(a,b){return _.defaults(b,a);})'  # todo vyjasnit kde ma být ta je to napřic targety konzistentní
         },
         'bool': {
             'True': 'true',

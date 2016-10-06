@@ -4,7 +4,7 @@ import decoder
 import targets
 import metadecoder
 import lispson_js
-
+import utils
 
 tests = [
     [4, ['add', 2, 2]],
@@ -40,7 +40,11 @@ tests = [
     ['bar', 'foo'],
     [23, ['sub', 'answer', 19]],
     [120, ['factorial', 5]],
-    [42, ['ans']]
+    [42, ['ans']],
+    [6, ['let2', 'x, y', ["'", 4, 2], ['x', '+', 'y']]],
+    [[1, 2, 3], ['mkl', 1, [1, '+', 1], 3]],
+    [{'foo': 42, 'bar': 23}, ['add_dict', ["'", {'foo': 42}], ["'", {'bar': 23}]]],
+    [{'foo': 42, 'bar': 23, "_": 1}, ['add_dict', {'foo': 42, "_": 1}, {'bar': 23, "_": 1}]]
 ]
 
 
@@ -102,7 +106,7 @@ def run_tests(eval_fun):
         if should_be is not None:
             nonlocal num_tested
             num_tested += 1
-            assert val == should_be, 'Decode test failed!'
+            assert utils.json_eq(val, should_be), 'Decode test failed! '+utils.ordered_dumps(val)+' '+utils.ordered_dumps(should_be)
             print('OK\n')
         else:
             nonlocal num_not_tested
@@ -111,15 +115,6 @@ def run_tests(eval_fun):
 
     for t in tests:
         test(t[0], t[1])
-
-    # todo : make ok in lispson_js and move to tests
-    test(6, ['let2', 'x, y', ["'", 4, 2], ['x', '+', 'y']])
-    test([1, 2, 3], ['mkl', 1, [1, '+', 1], 3])
-
-    # tests without yet without should_be
-    test(['add_dict', ["'", {'foo': 42}], ["'", {'bar': 23}]])
-    test(['add_dict', {'foo': 42, "_": 1}, {'bar': 23, "_": 1}])
-    test('add')
 
     print('tested:', num_tested)
     print('not tested:', num_not_tested)

@@ -34,7 +34,9 @@ def js_test():
         'lang': targets.langs['javascript'],
         'native': {
             'mkv': lambda k, v: {k: v},
-            'mkp': lambda a, b: [a, b]
+            'mkp': lambda a, b: [a, b],
+            'mks': lambda x: ['...', x],  # todo trošku hax - vyjasnit ...
+            'mkl': lambda *xs: list(xs)
         },
         'defs': {
             'add': {'x, y': ['x', '+', 'y']},
@@ -51,7 +53,8 @@ def js_test():
         },
         'macros': {  # todo: aby bylo nepovinný
             'lambda': {"head, body": ["mkv", "head", "body"]},
-            'let': {"head, val, body": ["mkp", ["mkv", "head", "body"], 'val']}
+            'let': {"head, val, body": ["mkp", ["mkv", "head", "body"], 'val']},
+            'let2': {"head, val, body": ["mkp", ["mkv", "head", "body"], ['mks', 'val']]}
         }
     }
 
