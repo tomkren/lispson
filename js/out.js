@@ -49,7 +49,7 @@ var tests = [
 })],
 [2, (function () {
     var len = _.size;
-    return len({"foo": 42, "bar": 23});
+    return len({"bar": 23, "foo": 42});
 })],
 [1, (function () {
     var len = _.size;
@@ -260,12 +260,12 @@ var tests = [
     var mkl = (function(...xs){return xs;});
     return mkl(1, (1 + 1), 3);
 })],
-[{"foo": 42, "bar": 23}, (function () {
+[{"bar": 23, "foo": 42}, (function () {
     var add_dict = (function(a,b){return _.defaults(b,a);});
     return add_dict({"foo": 42}, {"bar": 23});
 })],
-[{"foo": 42, "_": 1, "bar": 23}, (function () {
+[{"_": 1, "bar": 23, "foo": 42}, (function () {
     var add_dict = (function(a,b){return _.defaults(b,a);});
-    return add_dict({"foo": 42, "_": 1}, {"_": 1, "bar": 23});
+    return add_dict({"_": 1, "foo": 42}, {"_": 1, "bar": 23});
 })],
 ];

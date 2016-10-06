@@ -1,6 +1,6 @@
 import decoder
 import targets
-import json
+import utils
 import tests
 
 
@@ -16,7 +16,7 @@ def mk_js_test(lib, lispson_test, i):
 def mk_js_tests(lib, lispson_tests):
     tests_code = 'var tests = [\n'
     for i, lispson_test in enumerate(lispson_tests):
-        tests_code += '[' + json.dumps(lispson_tests[i][0]) + ', (' + mk_js_test(lib, lispson_test, i) + ')],\n'
+        tests_code += '[' + utils.ordered_dumps(lispson_tests[i][0]) + ', (' + mk_js_test(lib, lispson_test, i) + ')],\n'
     tests_code += '];'
     return tests_code
 

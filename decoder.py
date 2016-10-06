@@ -1,6 +1,6 @@
-import json
 import tests
 import targets
+import utils
 
 
 def eval_lispson(lispson, lib, output_code=False, output_all=False):
@@ -76,7 +76,7 @@ def decode_dict_internal(json_dict, lib, acc):
         acc['vars'] = old_vars
         return {'is_lambda': True, 'head': head, 'body': body}
     else:
-        return {'is_lambda': False, 'json_str': json.dumps(json_dict)}
+        return {'is_lambda': False, 'json_str': utils.ordered_dumps(json_dict)}
 
 
 def decode_list(json_list, lib, acc):
@@ -122,7 +122,7 @@ def decode_infix(lib, acc, a, op, b):
 
 
 def decode_quote(args):
-    return json.dumps(args[0] if len(args) == 1 else args)
+    return utils.ordered_dumps(args[0] if len(args) == 1 else args)
 
 
 def decode_macro(macro_name, args, lib, acc):
