@@ -69,12 +69,12 @@ def run_tests(eval_fun):
 
     lib = {
         'lang': targets.langs['python'],
-        'native': {
-            'mkv': lambda k, v: {k: v},
-            'mkp': lambda a, b: [a, b],
-            'mks': lambda x: ['*', x],
-            'mkl': lambda *xs: list(xs),
-        },
+        # 'native': {
+        #     'mkv': lambda k, v: {k: v},
+        #     'mkp': lambda a, b: [a, b],
+        #     'mks': lambda x: ['*', x],
+        #     'mkl': lambda *xs: list(xs),
+        # },
         'defs': {
             'add': {'x, y': ['x', '+', 'y']},
             'add2': 'add',
@@ -93,7 +93,7 @@ def run_tests(eval_fun):
         'macros': {
             'lambda': {"head, body": ["mkv", "head", "body"]},
             'let': {"head, val, body": ["mkp", ["mkv", "head", "body"], 'val']},
-            'let2': {"head, val, body": ["mkp", ["mkv", "head", "body"], ['mks', 'val']]}
+            'let2': {"head, val, body": ["mkp", ["mkv", "head", "body"], ['mks_py', 'val']]}
         }
     }
 

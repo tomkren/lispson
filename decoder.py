@@ -8,8 +8,8 @@ def eval_lispson(lispson, lib, output_code=False, output_all=False):
     def_codes = defs.values()
     defs_code = '\n'.join(def_codes)
 
-    exec(defs_code, lib['native'])
-    val = eval(code, lib['native'])
+    exec(defs_code, lib['lang']['native'])
+    val = eval(code, lib['lang']['native'])
 
     if output_all:
         return val, code, def_codes, natives
@@ -32,7 +32,6 @@ def decode(lispson, lib):
     lib['defs'] = all_defs
 
     code_str = decode_acc(lispson, lib, acc)
-    # print('natives (for ', lispson, '): ', acc['natives'])  # todo lépe
     return code_str, acc['defs'], acc['natives']
 
 

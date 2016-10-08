@@ -1,5 +1,5 @@
 import targets
-import json
+# import json
 import tests
 import decoder
 
@@ -14,25 +14,25 @@ def main():
             'do': 'do_notation',
             'gets': 'gets_notation'
         },
-        'native': {
-            'mkv': lambda k, v: {k: v},
-            'mkp': lambda a, b: [a, b],
-            'mkl': lambda *xs: list(xs),
-            'do_notation': lambda *lines: do_notation(lines),
-            'gets_notation': gets_notation,
-            'get': lambda o, *keys: get_by_keys(o, keys),
-            'set_val': set_val,
-            'tail': lambda xs: xs[1:],
-            'n_join': lambda xs: '\n'.join(xs),
-            'json_dumps': json.dumps
-        },
+        # 'native': {
+        #     'mkv': lambda k, v: {k: v},
+        #     'mkp': lambda a, b: [a, b],
+        #     'mkl': lambda *xs: list(xs),
+        #     'do_notation': lambda *lines: do_notation(lines),
+        #     'gets_notation': gets_notation,
+        #     'get': lambda o, *keys: get_by_keys(o, keys),
+        #     'set_val': set_val,
+        #     'tail': lambda xs: xs[1:],
+        #     'n_join': lambda xs: '\n'.join(xs),
+        #     'json_dumps': json.dumps
+        # },
         'defs': {
             'eval_lispson': {'lispson, lib, output_code': ['do',
                 ['let*', 'code, defs', ['decode', 'lispson', 'lib']],
                 ['let', 'def_codes', [['dot', 'defs', 'values']]],
                 ['let', 'defs_code', ['n_join', 'def_codes']],
-                ['let', '_', ['exec', 'defs_code', ['gets', 'lib', 'native']]],
-                ['let', 'val', ['eval', 'code', ['gets', 'lib', 'native']]],
+                ['let', '_', ['exec', 'defs_code', ['gets', 'lib', 'lang', 'native']]],
+                ['let', 'val', ['eval', 'code', ['gets', 'lib', 'lang', 'native']]],
                 ['if', 'output_code', ["mkl", 'val', 'code', 'def_codes'], 'val']
             ]},
             'decode': {'lispson, lib': ['do',
@@ -164,23 +164,6 @@ def main():
     print('\n(meta_)eval_lispson natives:', natives)
 
     return num_tested
-
-
-def do_notation(lines):
-    return lines[0] + [do_notation(lines[1:])] if len(lines) > 1 else lines[0]
-
-
-def set_val(o, key, val):
-    o[key] = val
-    return val
-
-
-def get_by_keys(o, keys):
-    return get_by_keys(o[keys[0]], keys[1:]) if keys else o
-
-
-def gets_notation(o, *keys):
-    return ['get', o] + [["'", key] for key in keys]
 
 
 def print_defs(def_codes):
