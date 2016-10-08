@@ -1,4 +1,11 @@
 var tests = [
+[6, (function () {
+    return (function(x, y){return (x + y);})(...([4, 2]));
+})],
+["bar", (function () {
+    var foo = "bar";
+    return foo;
+})],
 [4, (function () {
     function add (x, y) {
         return (x + y);
@@ -9,7 +16,9 @@ var tests = [
     function add (x, y) {
         return (x + y);
     }
-    var add2 = add;
+    function add2 (x, y) {
+        return add(x, y);
+    }
     return add2(2, 2);
 })],
 [4, (function () {
@@ -46,6 +55,10 @@ var tests = [
 [0, (function () {
     var len = _.size;
     return len([]);
+})],
+[1, (function () {
+    var len = _.size;
+    return len([42]);
 })],
 [2, (function () {
     var len = _.size;
@@ -230,10 +243,6 @@ var tests = [
     var answer = 42;
     return answer;
 })],
-["bar", (function () {
-    var foo = "bar";
-    return foo;
-})],
 [23, (function () {
     function sub (a, b) {
         return (a - b);
@@ -253,8 +262,8 @@ var tests = [
     }
     return ans();
 })],
-[6, (function () {
-    return (function(x, y){return (x + y);})(...([4, 2]));
+[7, (function () {
+    return (function(x, y){return (x + y);})(4, 3);
 })],
 [[1, 2, 3], (function () {
     var mkl = (function(...xs){return xs;});

@@ -8,8 +8,14 @@ def eval_lispson(lispson, lib, output_code=False, output_all=False):
     def_codes = defs.values()
     defs_code = '\n'.join(def_codes)
 
-    exec(defs_code, lib['lang']['native'])
-    val = eval(code, lib['lang']['native'])
+    print(defs_code)
+
+    # native = dict(lib['lang']['native'])
+    # native_compiled = compile_native(native)
+    native_compiled = lib['lang']['native']
+
+    exec(defs_code, native_compiled)
+    val = eval(code, native_compiled)
 
     if output_all:
         return val, code, def_codes, natives
@@ -17,6 +23,18 @@ def eval_lispson(lispson, lib, output_code=False, output_all=False):
         return val, code, def_codes
     else:
         return val, natives  # todo HAX aby se nerozbil metadecoder
+
+
+def compile_native(native_dict):
+    for k in native_dict.keys():
+        v = native_dict[k]
+        if isinstance(v, str):
+            native_dict[k] = eval(v)
+    # return ret
+    # print('+++1', ret)
+    # print('+++', native_dict)
+    return native_dict
+    # return {k: v for k, v in native_dict.items()}
 
 
 def decode(lispson, lib):
@@ -132,7 +150,9 @@ def decode_macro(macro_name, args, lib, acc):
         macro, macro_natives = eval_lispson(macro, hax_lib, False)
         macros[macro_name] = macro  # Non-pure optimization saving the compiled macro (can be omitted)
         acc['natives'].update(macro_natives)
-    return decode_acc(macro(*args), lib, acc)
+    lispson_code = macro(*args)
+    print('>>>', lispson_code)
+    return decode_acc(lispson_code, lib, acc)
 
 
 # If needs a special treatment because of if's laziness
@@ -151,26 +171,54 @@ def handle_def(sym, lib, acc):
     if sym in lib_defs:
         if sym not in defs:
             sym_def = lib_defs[sym]
+            mk_def = lib['lang']['target']['def']
 
             if isinstance(sym_def, str):
                 body = decode_acc(sym_def, lib, acc)
-                sym_def = lib['lang']['target']['def'](sym, body)
+                sym_def = mk_def(sym, body)
             else:
                 defs[sym] = None  # So it won't recurse forever ..
 
                 if isinstance(sym_def, dict):
                     decoded_dict = decode_dict_internal(sym_def, lib, acc)
                     if decoded_dict['is_lambda']:
-                        sym_def = lib['lang']['target']['def_fun'](sym, decoded_dict['head'], decoded_dict['body'])
+                        mk_def_fun = lib['lang']['target']['def_fun']
+                        sym_def = mk_def_fun(sym, decoded_dict['head'], decoded_dict['body'])
                     else:
-                        sym_def = lib['lang']['target']['def'](sym, decoded_dict['json_str'])
+                        sym_def = mk_def(sym, decoded_dict['json_str'])
                 else:
                     body = decode_acc(sym_def, lib, acc)
-                    sym_def = lib['lang']['target']['def'](sym, body)
+                    sym_def = mk_def(sym, body)
 
             defs[sym] = sym_def
     elif sym not in acc['vars']:
         acc['natives'].add(sym)
+
+
+def handle_def_2(sym, lib, acc):
+    defs = acc['defs']
+    lib_defs = lib['defs']
+    if sym in lib_defs:
+        if sym not in defs:
+            pass # todo
+    elif sym not in acc['vars']:
+        pass # todo
+
+
+def handle_def_dict(sym, lib, acc, sym_def):
+    decoded_dict = decode_dict_internal(sym_def, lib, acc)
+    target = lib['lang']['target']
+    sym_def2 = (
+        target['def_fun'](sym, decoded_dict['head'], decoded_dict['body'])
+        if decoded_dict['is_lambda']
+        else target['def_fun'](sym, decoded_dict['json_str']))
+    acc['defs'][sym] = sym_def2
+
+
+def handle_def_non_dict(sym, lib, acc, sym_def):
+    body = decode_acc(sym_def, lib, acc)
+    sym_def2 = lib['lang']['target']['def'](sym, body)
+    acc['defs'][sym] = sym_def2
 
 
 if __name__ == '__main__':

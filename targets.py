@@ -42,11 +42,15 @@ langs = {
                     # TODO a pokud ne tak přepis na prefix adekvátní
             '==', '!=', 'and', 'or', '+', '-', '*', '/', ',', 'is', 'in'
         },
-        'defs': {},
+        'defs': {
+            'star_app': {'fun, args': ['mkp', 'fun', ['mkp', ["'", '*'], 'args']]},
+            'add_dict': {'a, b': ['dict', 'a', ['**', 'b']]}
+        },
         'native': {
             'mkv': lambda k, v: {k: v},
             'mkp': lambda a, b: [a, b],
-            'mks_py': lambda x: ['*', x],  # todo lang specific hax - fix it ...
+            'cons': lambda x, xs: [x] + xs,
+            'mks_py': lambda x: ['*', x],
             'mks_js': lambda x: ['...', x],
             'mkl': lambda *xs: list(xs),
             'do_notation': lambda *lines: do_notation(lines),
@@ -56,6 +60,21 @@ langs = {
             'tail': lambda xs: xs[1:],
             'n_join': lambda xs: '\n'.join(xs),
             'json_dumps': json.dumps
+        },
+        'native0': {
+            'mkv':           "lambda k, v: {k: v}",
+            'mkp':           "lambda a, b: [a, b]",
+            'cons':          "lambda x, xs: [x] + xs",
+            'mks_py':        "lambda x: ['*', x]",
+            'mks_js':        "lambda x: ['...', x]",
+            'mkl':           "lambda *xs: list(xs)",
+            'do_notation':   lambda *lines: do_notation(lines),
+            'gets_notation': gets_notation,
+            'get':           lambda o, *keys: get_by_keys(o, keys),
+            'set_val':       set_val,
+            'tail':          "lambda xs: xs[1:]",
+            'n_join':        "lambda xs: '\\n'.join(xs)",
+            'json_dumps':    json.dumps
         }
     },
     'javascript': {
@@ -72,6 +91,7 @@ langs = {
             '==', '!=', 'and', 'or', '+', '-', '*', '/', ',', 'is', 'in'  # todo !
         },
         'defs': {
+            'star_app': {'fun, args': ['mkp', 'fun', ['mkp', ["'", '...'], 'args']]},
             'len': '_.size',
             'mkl': '(function(...xs){return xs;})',  # TODO --- HAX !!! ... vyjasnit
             'add_dict': '(function(a,b){return _.defaults(b,a);})'  # todo vyjasnit kde ma být ta je to napřic targety konzistentní

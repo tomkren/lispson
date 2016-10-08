@@ -3,10 +3,13 @@ import json
 import decoder
 import targets
 import metadecoder
+import metadecoder_v2
 import lispson_js
 import utils
 
 tests = [
+    [6, ['let*', 'x, y', ["'", 4, 2], ['x', '+', 'y']]],
+    ['bar', 'foo'],
     [4, ['add', 2, 2]],
     [4, ["add2", 2, 2]],
     [4, [2, '+', 2]],
@@ -17,6 +20,7 @@ tests = [
     [2, ["len", ["'", "hello ", "world!"]]],
     [0, ["len", ["'"]]],
     [0, ["len", []]],
+    [1, ["len", ["'", [42]]]],
     [2, ["len", {'foo': 42, 'bar': 23}]],
     [1, ["len", ["'", {'foo': 42}]]],
     [3, [{"x,y": ["add", "x", "y"]}, 1, 2]],
@@ -37,11 +41,10 @@ tests = [
     [False, ['even', 23]],
     [True, ['odd', 23]],
     [42, 'answer'],
-    ['bar', 'foo'],
     [23, ['sub', 'answer', 19]],
     [120, ['factorial', 5]],
     [42, ['ans']],
-    [6, ['let2', 'x, y', ["'", 4, 2], ['x', '+', 'y']]],
+    [7, ['let2', 'x, y', [4, 3], ['x', '+', 'y']]],
     [[1, 2, 3], ['mkl', 1, [1, '+', 1], 3]],
     [{'foo': 42, 'bar': 23}, ['add_dict', ["'", {'foo': 42}], ["'", {'bar': 23}]]],
     [{'foo': 42, 'bar': 23, "_": 1}, ['add_dict', {'foo': 42, "_": 1}, {'bar': 23, "_": 1}]]
@@ -65,24 +68,15 @@ def test_decoder(eval_fun, lib, lispson):
     return val
 
 
-def run_tests(eval_fun):
-
-    lib = {
-        'lang': targets.langs['python'],
-        # 'native': {
-        #     'mkv': lambda k, v: {k: v},
-        #     'mkp': lambda a, b: [a, b],
-        #     'mks': lambda x: ['*', x],
-        #     'mkl': lambda *xs: list(xs),
-        # },
+def mk_lib(lang_name):
+    return {
+        'lang': targets.langs[lang_name],
         'defs': {
             'add': {'x, y': ['x', '+', 'y']},
-            'add2': 'add',
+            'add2': {'x, y': ['add', 'x', 'y']},
             'sub': {'a, b': ['a', '-', 'b']},
-            'mul': {'a, b': ['a', '*', 'b']},
             'eq': {'a, b': ['a', '==', 'b']},
             'inc': {'x': ['add', 'x', 1]},
-            'add_dict': {'a, b': ['dict', 'a', ['**', 'b']]},
             'answer': 42,
             'ans': {'': 42},
             'foo': ["'", 'bar'],
@@ -93,9 +87,15 @@ def run_tests(eval_fun):
         'macros': {
             'lambda': {"head, body": ["mkv", "head", "body"]},
             'let': {"head, val, body": ["mkp", ["mkv", "head", "body"], 'val']},
-            'let2': {"head, val, body": ["mkp", ["mkv", "head", "body"], ['mks_py', 'val']]}
+            'let2': {"head, val, body": ["cons", ["mkv", "head", "body"], 'val']},
+            'let*': {"head, val, body": ["star_app", ["mkv", "head", "body"], 'val']}
         }
     }
+
+
+def run_tests(eval_fun):
+
+    lib = mk_lib('python')
 
     num_not_tested = 0
     num_tested = 0
@@ -127,4 +127,5 @@ if __name__ == '__main__':
     total_num_tested = run_tests(decoder.eval_lispson)
     total_num_tested += metadecoder.main()
     lispson_js.js_test()
+    total_num_tested += metadecoder_v2.main()
     print('\nnum_tested from all tests:', total_num_tested)
