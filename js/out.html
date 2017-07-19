@@ -10,12 +10,12 @@
   <body>
     <div id="out"></div>
     <script>
-        var results = _.map(tests, function (p) {
+        let results = _.map(tests, function (p) {
             return _.isEqual(p[0], p[1]());
         });
 
-        var numTests = _.size(results);
-        var allOk = _.every(results) && numTests > 0;
+        let numTests = _.size(results);
+        let allOk = _.every(results) && numTests > 0;
 
         console.log(tests);
         console.log(results);

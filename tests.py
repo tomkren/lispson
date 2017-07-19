@@ -47,7 +47,9 @@ tests = [
     [7, ['let2', 'x, y', [4, 3], ['x', '+', 'y']]],
     [[1, 2, 3], ['mkl', 1, [1, '+', 1], 3]],
     [{'foo': 42, 'bar': 23}, ['add_dict', ["'", {'foo': 42}], ["'", {'bar': 23}]]],
-    [{'foo': 42, 'bar': 23, "_": 1}, ['add_dict', {'foo': 42, "_": 1}, {'bar': 23, "_": 1}]]
+    [{'foo': 42, 'bar': 23, "_": 1}, ['add_dict', {'foo': 42, "_": 1}, {'bar': 23, "_": 1}]],
+    # [4200, ['if', [True, 'or', False], ['mul', 42, 100], 23]],
+    [0, ['if', True, 0, ['decode_if', 42, 23]]]
 ]
 
 
@@ -72,6 +74,7 @@ def mk_lib(lang_name):
     return {
         'lang': targets.langs[lang_name],
         'defs': {
+            'mul': {'x, y': ['x', '*', 'y']},
             'add': {'x, y': ['x', '+', 'y']},
             'add2': {'x, y': ['add', 'x', 'y']},
             'sub': {'a, b': ['a', '-', 'b']},
@@ -82,13 +85,16 @@ def mk_lib(lang_name):
             'foo': ["'", 'bar'],
             'even': {'n': ['if', ['eq', 'n', 0], True, ['odd', ['sub', 'n', 1]]]},
             'odd': {'n': ['if', ['eq', 'n', 0], False, ['even', ['sub', 'n', 1]]]},
-            'factorial': {'n': ['if', ['n', '==', 0], 1, ['n', '*', ['factorial', ['n', '-', 1]]]]}
+            'factorial': {'n': ['if', ['n', '==', 0], 1, ['n', '*', ['factorial', ['n', '-', 1]]]]},
+            'decode_if': {'decoded_args, lib': [['gets', 'lib', 'lang', 'target', 'if'], ['star', 'decoded_args']]}
         },
         'macros': {
             'lambda': {"head, body": ["mkv", "head", "body"]},
             'let': {"head, val, body": ["mkp", ["mkv", "head", "body"], 'val']},
             'let2': {"head, val, body": ["cons", ["mkv", "head", "body"], 'val']},
-            'let*': {"head, val, body": ["star_app", ["mkv", "head", "body"], 'val']}
+            'let*': {"head, val, body": ["star_app", ["mkv", "head", "body"], 'val']},
+            'gets': 'gets_notation',
+            'star': {"x": ["star_it", "x"]}
         }
     }
 

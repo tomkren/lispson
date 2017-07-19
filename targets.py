@@ -44,7 +44,8 @@ langs = {
         },
         'defs': {
             'star_app': {'fun, args': ['mkp', 'fun', ['mkp', ["'", '*'], 'args']]},
-            'add_dict': {'a, b': ['dict', 'a', ['**', 'b']]}
+            'add_dict': {'a, b': ['dict', 'a', ['**', 'b']]},
+            'star_it': {'x': ['mkp', ["'", '*'], 'x']}
         },
         'native': {
             'mkv': lambda k, v: {k: v},
@@ -94,7 +95,8 @@ langs = {
             'star_app': {'fun, args': ['mkp', 'fun', ['mkp', ["'", '...'], 'args']]},
             'len': '_.size',
             'mkl': '(function(...xs){return xs;})',  # TODO --- HAX !!! ... vyjasnit
-            'add_dict': '(function(a,b){return _.defaults(b,a);})'  # todo vyjasnit kde ma být ta je to napřic targety konzistentní
+            'add_dict': '(function(a,b){return _.defaults(b,a);})',  # todo vyjasnit kde ma být ta je to napřic targety konzistentní
+            'star_it': {'x': ['mkp', ["'", '...'], 'x']}
         },
         # 'native': {},
         'bool': {

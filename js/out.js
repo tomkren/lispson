@@ -277,4 +277,10 @@ var tests = [
     var add_dict = (function(a,b){return _.defaults(b,a);});
     return add_dict({"_": 1, "foo": 42}, {"_": 1, "bar": 23});
 })],
+[0, (function () {
+    function decode_if (decoded_args, lib) {
+        return get(lib, "lang", "target", "if")(...(decoded_args));
+    }
+    return (true ? 0 : decode_if(42, 23));
+})],
 ];
